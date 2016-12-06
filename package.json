@@ -4,7 +4,7 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-    "ripple-lib": "*",
+    "ripple-lib": "0.16.5",
     "babel-cli": "^6.0.0",
     "babel-preset-es2015": "*"
   },

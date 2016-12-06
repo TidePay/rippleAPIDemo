@@ -1,0 +1,13 @@
+// install rippleAPI and dependencies
+cd rippleAPIDemo
+npm install
+
+// build rippleAPI for using rippleAPI in web browser
+download ripplie-lib source code (0.16.5)
+https://github.com/ripple/ripple-lib/releases/tag/0.16.5
+
+cd ripple-lib-0.16.5
+npm install
+npm run build
+
+The results of build process will be placed in build/ folder.
