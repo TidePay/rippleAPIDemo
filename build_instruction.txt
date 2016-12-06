@@ -11,3 +11,5 @@ npm install
 npm run build
 
 The results of build process will be placed in build/ folder.
+
+copy all the js to scripts/ripple-lib
