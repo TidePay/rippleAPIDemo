@@ -1,0 +1,19 @@
+doctype html
+html
+    head
+        title=command.name
+    body
+        a(href='../main') [back to main]
+        h1 #{command.name}
+
+        form(method='POST' action='')
+            div
+                span #{hostURL}
+                span /#{command.command}
+                each param in command.params
+                    span /
+                    input(type='text' name=param)
+            button(type='submit') Submit
+            div
+                p Result: #{response}
+                pre #{result}

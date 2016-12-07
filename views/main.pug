@@ -1,0 +1,11 @@
+doctype html
+html
+    head
+        title="Main"
+    body
+        h1 Main
+
+        ul
+            each command, index in commands
+                li
+                    a(href='./query/' + index) #{command.name}

@@ -1,0 +1,13 @@
+doctype html
+html
+    head
+        title="Server"
+    body
+        h1 Server
+
+        form(method='POST' action='')
+            each server in servers
+                input(type='radio' name='server' value=server.websocket)
+                | #{server.name}
+                br
+            button(type='submit') Connect
