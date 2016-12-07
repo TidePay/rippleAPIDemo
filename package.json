@@ -4,13 +4,17 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-    "ripple-lib": "0.16.5",
     "babel-cli": "^6.0.0",
     "babel-preset-es2015": "*",
-    "express": "4.14.0"
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "request": "^2.79.0",
+    "ripple-lib": "0.16.5"
   },
   "babel": {
-    "presets": ["es2015"]
+    "presets": [
+      "es2015"
+    ]
   },
   "devDependencies": {
     "eslint": "*"
