@@ -18,10 +18,10 @@ var app = express();
 var bodyParser = require('body-parser');
 
 // parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.urlencoded({ extended: false }));
 
 // parse application/json
-app.use(bodyParser.json())
+app.use(bodyParser.json());
 
 // use pug for templating
 app.set('view engine', 'pug');
@@ -33,12 +33,15 @@ app.get('/main', routes.main);
 app.get('/query/:commandIndex', routes.query);
 app.post('/query/:commandIndex', routes.submitQuery);
 
-app.get('/account/:address', routes.getAccountInfo);
-app.get('/server', routes.getServerInfo);
-app.get('/transaction/:id', routes.getTransaction);
-app.get('/ledger', routes.getLedger);
-app.get('/trustlines/:address', routes.getTrustlines);
-app.get('/balances/:address', routes.getBalances);
+app.use('/q', routes.checkRippleConnection);
+app.get('/q/account/:address', routes.getAccountInfo);
+app.get('/q/server', routes.getServerInfo);
+app.get('/q/transaction/:id', routes.getTransaction);
+app.get('/q/ledger', routes.getLedger);
+app.get('/q/trustlines/:address', routes.getTrustlines);
+app.get('/q/balances/:address', routes.getBalances);
+
+app.use(routes.handleError);
 
 app.listen(3000, () => {
     console.log('Example app listening on port 3000!')

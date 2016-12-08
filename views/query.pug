@@ -9,7 +9,7 @@ html
         form(method='POST' action='')
             div
                 span #{hostURL}
-                span /#{command.command}
+                span /q/#{command.command}
                 each param in command.params
                     span /
                     input(type='text' name=param)

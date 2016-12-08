@@ -44,7 +44,7 @@ exports.connectToServer = function(req, res) {
 };
 
 exports.main = function(req, res) {
-    if (rapi.isConnected()) {
+    if (rapi && rapi.isConnected()) {
         res.render('main', {commands: commandList});
     } else {
         res.send('Not yet connected to rippled server.');
@@ -61,7 +61,7 @@ exports.submitQuery = function(req, res) {
     var commandIndex = parseInt(req.params.commandIndex);
     var command = commandList[commandIndex];
 
-    var url = HOST_URL + '/' + command.command;
+    var url = HOST_URL + '/q/' + command.command;
     var i;
     for (i = 0; i < command.params.length; i++) {
         url += '/';
@@ -89,56 +89,75 @@ exports.submitQuery = function(req, res) {
 
 // wrapper functions to RippleAPI
 
-exports.getAccountInfo = function(req, res) {
+exports.getAccountInfo = function(req, res, next) {
     console.log('getAccountInfo: ' + req.params.address);
     rapi.getAccountInfo(req.params.address).then(info => {
         res.send(info);
-    }).catch((error) => {
-        console.error(error);
-        res.status(404).send(error.name + ': ' + error.message);
+    }).catch(err => {
+        next(err);
     });
 };
 
-exports.getServerInfo = function(req, res) {
+exports.getServerInfo = function(req, res, next) {
     console.log('getServerInfo');
     rapi.getServerInfo().then(info => {
         res.send(info);
-    }).catch((err) => {
-        console.error(error);
-        res.status(500).send(error.name + ': ' + error.message);
+    }).catch(err => {
+        next(err);
     });
 };
 
-exports.getTransaction = function(req, res) {
+exports.getTransaction = function(req, res, next) {
     console.log('getTransaction');
     rapi.getTransaction(req.params.id).then(info => {
         res.send(info);
-    }).catch((err) => {
-        console.error(err);
-        res.status(404).send(err.name + ': ' + err.message);
+    }).catch(err => {
+        next(err);
     });
 };
 
-exports.getLedger = function(req, res) {
+exports.getLedger = function(req, res, next) {
     console.log('getLedger');
     rapi.getLedger().then(info => {
         res.send(info);
+    }).catch(err => {
+        next(err);
     });
-    // TODO: error handling
 };
 
-exports.getTrustlines = function(req, res) {
+exports.getTrustlines = function(req, res, next) {
     console.log('getTrustlines: ' + req.params.address);
     rapi.getTrustlines(req.params.address).then(info => {
         res.send(info);
+    }).catch(err => {
+        next(err);
     });
-    // TODO: error handling
 };
 
-exports.getBalances = function(req, res) {
+exports.getBalances = function(req, res, next) {
     console.log('getBalances: ' + req.params.address);
     rapi.getBalances(req.params.address).then(info => {
         res.send(info);
+    }).catch(err => {
+        next(err);
     });
-    // TODO: error handling
+};
+
+// middleware function to handle error
+
+exports.handleError = function(err, req, res, next) {
+    console.error(err);
+    res.status(500);
+    res.send(err.name + ': ' + err.message);
+};
+
+// middleware function to check ripple connection
+
+exports.checkRippleConnection = function(req, res, next) {
+    if (rapi && rapi.isConnected()) {
+        next();
+    } else {
+        res.status(400);
+        res.send('Not yet connected to ripple server.');
+    }
 };
