@@ -3,8 +3,12 @@ html
     head
         title="Main"
     body
-        h1 Main
-
+        h1 Operations
+        ul
+            each operation in operations
+                li
+                    a(href='.' + operation.path) #{operation.name}
+        h1 Commands
         ul
             each command, index in commands
                 li

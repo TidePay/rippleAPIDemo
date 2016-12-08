@@ -37,9 +37,16 @@ app.use('/q', routes.checkRippleConnection);
 app.get('/q/account/:address', routes.getAccountInfo);
 app.get('/q/server', routes.getServerInfo);
 app.get('/q/transaction/:id', routes.getTransaction);
+app.get('/q/transactions/:address', routes.getTransactions);
 app.get('/q/ledger', routes.getLedger);
 app.get('/q/trustlines/:address', routes.getTrustlines);
 app.get('/q/balances/:address', routes.getBalances);
+app.get('/q/orders/:address', routes.getOrders);
+
+app.get('/queryAccount', routes.showQueryAccount);
+app.post('/queryAccount', routes.queryAccount);
+app.get('/makePayment', routes.showMakePayment);
+app.post('/makePayment/result', routes.makePayment);
 
 app.use(routes.handleError);
 

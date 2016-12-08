@@ -1,0 +1,24 @@
+doctype html
+html
+  head
+    title="Make Payment"
+  body
+    a(href='../main') [back to main]
+    h1 Make Payment
+    form(method='POST' action='/makePayment/result')
+      div
+        label(for='sourceAddress') Source Address:
+        input(type='text' name='sourceAddress')
+      div
+        label(for='sourceSecret') Source Secret:
+        input(type='text' name='sourceSecret')
+      div
+        label(for='destinationAddress') Destination Address:
+        input(type='text' name='destinationAddress')
+      div
+        label(for='currency') Currency:
+        input(type='text' name='currency')
+      div
+        label(for='amount') Amount:
+        input(type='text' name='amount')
+      button(type='submit') Submit

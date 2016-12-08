@@ -1,0 +1,95 @@
+doctype html
+html
+  head
+    title Get Account Data
+  body
+    a(href='../main') [back to main]
+    h1 Get Account Data
+    form(method='POST' action='')
+      div
+        label(for='address') Address:
+        input(type='text' name='address')
+      button(type='submit') Submit
+    
+    h1 #{accountAddress}
+
+    h2 Balances
+    table(width=1000 border=1)
+      tr
+        td Currency
+        td Amount
+        td Counterparty
+      each balance in balances
+        tr
+          td #{balance.currency}
+          td #{balance.value}
+          td #{balance.counterparty}
+
+    h2 Transaction History
+    table(width=1000 border=1)
+      tr
+        td Type
+        td Description
+        td Result
+        td Cost
+        td Timestamp
+        td Sequence number
+        td Ledger Version
+      each transaction in transactions
+        tr
+          td
+            span(title=transaction.id) #{transaction.type}
+            case transaction.type
+              when 'payment'
+                if transaction.specification.source.address == accountAddress
+                  td send #{transaction.specification.destination.amount.value} #{transaction.specification.destination.amount.currency} to #{transaction.specification.destination.address}
+                else
+                  td receive #{transaction.specification.destination.amount.value} #{transaction.specification.destination.amount.currency} from #{transaction.specification.source.address}
+              when 'order'
+                td #{transaction.specification.direction} #{transaction.specification.quantity.value} #{transaction.specification.quantity.currency} => #{transaction.specification.totalPrice.value} #{transaction.specification.totalPrice.currency}
+              when 'orderCancellation'
+                td cancel order #{transaction.specification.orderSequence}
+              when 'trustline'
+                td trust #{transaction.specification.counterparty} with limit #{transaction.specification.limit} #{transaction.specification.currency}
+              when 'settings'
+                td 
+              default
+                td #{transaction.specification}
+            td #{transaction.outcome.result}
+            td #{transaction.outcome.fee} XRP
+            td #{transaction.outcome.timestamp}
+            td #{transaction.sequence}
+            td #{transaction.outcome.ledgerVersion} (#{transaction.outcome.indexInLedger})
+            td
+              - var url = '../q/transaction/' + transaction.id
+              a(href=url) details
+    
+    h2 Orders
+    table(width=1000 border=1)
+      tr
+        td Direction
+        td Quantity
+        td Total Price
+        td Maker Account
+        td Exchange Rate
+      each order in orders
+        tr
+          td #{order.specification.direction}
+          td #{order.specification.quantity.value} #{order.specification.quantity.currency}
+          td #{order.specification.totalPrice.value} #{order.specification.totalPrice.currency}
+          td #{order.properties.maker}
+          td #{order.properties.makerExchangeRate}
+
+    h2 Trustlines
+    table(width=1000 border=1)
+      tr
+        td Counterparty
+        td Currency
+        td Limit
+        td Balance
+      each trustline in trustlines
+        tr
+          td #{trustline.specification.counterparty}
+          td #{trustline.specification.currency}
+          td #{trustline.specification.limit}
+          td #{trustline.state.balance}
