@@ -9,9 +9,14 @@ html
       div
         label(for='address') Address:
         input(type='text' name='address')
+      div
+        label(for='account') Account:
+        select(name='account')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
       button(type='submit') Submit
     
-    h1 #{accountAddress}
+    h1 #{data.accountAddress}
     if error
         p(style='color:red') #{error.name}: #{error.message}
 
@@ -21,13 +26,14 @@ html
         td Currency
         td Amount
         td Counterparty
-      each balance in balances
+      each balance in data.balances
         tr
           td #{balance.currency}
           td #{balance.value}
           td #{balance.counterparty}
 
     h2 Transaction History
+    p Last #{maxTransactions} transactions:
     table(width=1000 border=1)
       tr
         td Type
@@ -37,7 +43,9 @@ html
         td Timestamp
         td Sequence number
         td Ledger Version
-      each transaction in transactions
+        td Balance Changes
+        td 
+      each transaction in data.transactions
         tr
           td
             span(title=transaction.id) #{transaction.type}
@@ -55,6 +63,9 @@ html
                 td trust #{transaction.specification.counterparty} with limit #{transaction.specification.limit} #{transaction.specification.currency}
               when 'settings'
                 td 
+                  ul
+                    each value, key in transaction.specification
+                      li #{key}: #{value}
               default
                 td #{transaction.specification}
             td #{transaction.outcome.result}
@@ -62,6 +73,14 @@ html
             td #{transaction.outcome.timestamp}
             td #{transaction.sequence}
             td #{transaction.outcome.ledgerVersion} (#{transaction.outcome.indexInLedger})
+            td 
+              ul
+                each changes, addressKey in transaction.outcome.balanceChanges
+                  li #{addressKey}
+                  ul
+                    each change in changes
+                      li #{change.value} #{change.currency}
+
             td
               - var url = '../q/transaction/' + transaction.id
               a(href=url) details
@@ -74,7 +93,7 @@ html
         td Total Price
         td Maker Account
         td Exchange Rate
-      each order in orders
+      each order in data.orders
         tr
           td #{order.specification.direction}
           td #{order.specification.quantity.value} #{order.specification.quantity.currency}
@@ -87,11 +106,22 @@ html
       tr
         td Counterparty
         td Currency
-        td Limit
-        td Balance
-      each trustline in trustlines
+        td Balance/Limit
+        td Specification
+      each trustline in data.trustlines
         tr
           td #{trustline.specification.counterparty}
           td #{trustline.specification.currency}
-          td #{trustline.specification.limit}
-          td #{trustline.state.balance}
+          td #{trustline.state.balance} / #{trustline.specification.limit}
+          td 
+            ul
+              if trustline.specification.authorized
+                li authorized
+              if trustline.specification.frozen
+                li frozen
+              if trustline.specification.ripplingDisabled
+                li rippling disabled
+              if trustline.specification.qualityIn
+                li quality in: #{trustline.specification.qualityIn}
+              if trustline.specification.qualityOut
+                li quality out: #{trustline.specification.qualityOut}

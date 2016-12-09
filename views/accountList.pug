@@ -1,0 +1,33 @@
+doctype html
+html
+  head
+    title Get Account Data
+  body
+    a(href='../main') [back to main]
+    h1 Account List
+
+    h2 Add Account
+    form(method='POST' action='')
+      div
+        label(for='name') Name:
+        input#name(type='text' name='name')
+      div
+        label(for='address') Address:
+        input#address(type='text' name='address')
+      div
+        label(for='secret') Secret:
+        input#secret(type='text' name='secret')
+      button(type='submit') Submit
+
+    if errorMessage
+      p(style='color:red') #{errorMessage}
+    
+    h2 Accounts
+    table(width=1000 border=1)
+      tr
+        td Name
+        td Address
+      each account in accounts
+        tr
+          td #{account.name}
+          td #{account.address}

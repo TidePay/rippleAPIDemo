@@ -1,0 +1,18 @@
+doctype html
+html
+  head
+    title="Change Settings"
+  body
+    a(href='../main') [back to main]
+    h1 Change Settings
+    form(method='POST' action='')
+      div
+        label(for='address') Address:
+        input#address(type='text' name='address')
+      div
+        label(for='secret') Secret:
+        input#secret(type='text' name='secret')
+      div
+        label(for='defaultRipple') Default Ripple:
+        input#defaultRipple(type='checkbox' name='defaultRipple')
+      button(type='submit') Submit

@@ -42,11 +42,18 @@ app.get('/q/ledger', routes.getLedger);
 app.get('/q/trustlines/:address', routes.getTrustlines);
 app.get('/q/balances/:address', routes.getBalances);
 app.get('/q/orders/:address', routes.getOrders);
+app.get('/q/settings/:address', routes.getSettings);
 
+app.get('/manageAccounts', routes.showAccountList);
+app.post('/manageAccounts', routes.addAccount);
 app.get('/queryAccount', routes.showQueryAccount);
 app.post('/queryAccount', routes.queryAccount);
-app.get('/makePayment', routes.showMakePayment);
-app.post('/makePayment/result', routes.makePayment);
+app.get('/transaction/payment', routes.showMakePayment);
+app.post('/transaction/payment', routes.makePayment);
+app.get('/transaction/settings', routes.showChangeSettings);
+app.post('/transaction/settings', routes.changeSettings);
+app.get('/transaction/trustline', routes.showChangeTrustline);
+app.post('/transaction/trustline', routes.changeTrustline);
 
 app.use(routes.handleError);
 

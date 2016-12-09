@@ -5,20 +5,32 @@ html
   body
     a(href='../main') [back to main]
     h1 Make Payment
-    form(method='POST' action='/makePayment/result')
+    form(method='POST' action='')
       div
         label(for='sourceAddress') Source Address:
-        input(type='text' name='sourceAddress')
+        input#sourceAddress(type='text' name='sourceAddress')
       div
         label(for='sourceSecret') Source Secret:
-        input(type='text' name='sourceSecret')
+        input#sourceSecret(type='text' name='sourceSecret')
+      div
+        label(for='sourceCurrency') Source Currency:
+        input#sourceCurrency(type='text' name='sourceCurrency')
+      div
+        label(for='sourceMaxAmount') Source Max Amount:
+        input#sourceMaxAmount(type='text' name='sourceMaxAmount')
+      div
+        label(for='sourceCounterparty') Source Counterparty:
+        input#sourceCounterparty(type='text' name='sourceCounterparty')
       div
         label(for='destinationAddress') Destination Address:
-        input(type='text' name='destinationAddress')
+        input#destinationAddress(type='text' name='destinationAddress')
       div
-        label(for='currency') Currency:
-        input(type='text' name='currency')
+        label(for='destinationCurrency') Destination Currency:
+        input#destinationCurrency(type='text' name='destinationCurrency')
       div
-        label(for='amount') Amount:
-        input(type='text' name='amount')
+        label(for='destinationAmount') Destination Amount:
+        input#destinationAmount(type='text' name='destinationAmount')
+      div
+        label(for='destinationCounterparty') Destination Counterparty:
+        input#destinationCounterparty(type='text' name='destinationCounterparty')
       button(type='submit') Submit

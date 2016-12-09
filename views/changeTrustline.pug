@@ -1,0 +1,34 @@
+doctype html
+html
+  head
+    title="Change Trustline"
+  body
+    a(href='../main') [back to main]
+    h1 Change Trustline
+    form(method='POST' action='')
+      div
+        label(for='address') Address:
+        input#address(type='text' name='address')
+      div
+        label(for='secret') Secret:
+        input#secret(type='text' name='secret')
+      div
+        label(for='account') Account:
+        select(name='account')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
+      div
+        label(for='counterparty') Counterparty:
+        input#counterparty(type='text' name='counterparty')
+      div
+        label(for='counterpartyAccount') Counterparty Account:
+        select(name='counterpartyAccount')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
+      div
+        label(for='currency') Currency:
+        input#currency(type='text' name='currency')
+      div
+        label(for='limit') Limit Amount:
+        input#limit(type='text' name='limit')
+      button(type='submit') Submit
