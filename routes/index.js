@@ -8,8 +8,9 @@ const HOST_URL = 'http://localhost:3000';   // TODO: use req.hostname to get thi
 
 // list of rippled websocket
 var serverList = [
-    {name: 'Public rippled server', websocket: 'wss://s1.ripple.com'},          // Public rippled server hosted by Ripple, Inc.
-    {name: 'Ripple test net', websocket: 'wss://s.altnet.rippletest.net:51233'} // Ripple test net
+    {name: 'Public rippled server 1 - General purpose', websocket: 'wss://s1.ripple.com'},  // Public rippled server hosted by Ripple, Inc. (general purpose server)
+    {name: 'Public rippled server 2 - Full history', websocket: 'wss://s2.ripple.com'},     // Public rippled server hosted by Ripple, Inc. (full-history server)
+    {name: 'Ripple test net', websocket: 'wss://s.altnet.rippletest.net:51233'}             // Ripple test net
 ];
 
 // list of query commands
@@ -28,6 +29,15 @@ var operationList = [
     {name: 'Get Account Data', path: '/queryAccount'},
     {name: 'Make Payment', path: '/makePayment'}
 ];
+
+// custom classes
+var AccountData = function(address) {
+    this.accountAddress = address;
+    this.balances = [];
+    this.transactions = [];
+    this.orders = [];
+    this.trustlines = [];
+};
 
 exports.displayServerList = function(req, res) {
     if (!rapi) {
@@ -174,7 +184,7 @@ exports.getOrders = function(req, res, next) {
     }).catch(err => {
         next(err);
     });
-}
+};
 
 // middleware function to handle error
 
@@ -196,18 +206,13 @@ exports.checkRippleConnection = function(req, res, next) {
 };
 
 exports.showQueryAccount = function(req, res) {
-    var accountObject = new Object();
-    accountObject.balances = [];
-    accountObject.transactions = [];
-    accountObject.orders = [];
-    accountObject.trustlines = [];
+    var accountObject = new AccountData();
     res.render('accountData', accountObject);
 };
 
 exports.queryAccount = function(req, res, next) {
     var address = req.body.address;
-    var accountObject = new Object();
-    accountObject.accountAddress = address;
+    var accountObject = new AccountData(address);
     rapi.getBalances(address).then(info => {
         accountObject.balances = info;
         return rapi.getTransactions(address);
@@ -223,7 +228,8 @@ exports.queryAccount = function(req, res, next) {
         console.log(accountObject);
         res.render('accountData', accountObject);
     }).catch(err => {
-        next(err);
+        accountObject.error = err;
+        res.render('accountData', accountObject);
     });
 };
 

@@ -12,6 +12,8 @@ html
       button(type='submit') Submit
     
     h1 #{accountAddress}
+    if error
+        p(style='color:red') #{error.name}: #{error.message}
 
     h2 Balances
     table(width=1000 border=1)
