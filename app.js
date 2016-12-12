@@ -45,7 +45,8 @@ app.get('/q/orders/:address', routes.getOrders);
 app.get('/q/settings/:address', routes.getSettings);
 
 app.get('/manageAccounts', routes.showAccountList);
-app.post('/manageAccounts', routes.addAccount);
+app.post('/manageAccounts/addExisting', routes.addExistingAccount);
+app.post('/manageAccounts/create', routes.createAccount);
 app.get('/queryAccount', routes.showQueryAccount);
 app.post('/queryAccount', routes.queryAccount);
 app.get('/transaction/payment', routes.showMakePayment);

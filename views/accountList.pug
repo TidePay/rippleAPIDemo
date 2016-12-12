@@ -6,19 +6,6 @@ html
     a(href='../main') [back to main]
     h1 Account List
 
-    h2 Add Account
-    form(method='POST' action='')
-      div
-        label(for='name') Name:
-        input#name(type='text' name='name')
-      div
-        label(for='address') Address:
-        input#address(type='text' name='address')
-      div
-        label(for='secret') Secret:
-        input#secret(type='text' name='secret')
-      button(type='submit') Submit
-
     if errorMessage
       p(style='color:red') #{errorMessage}
     
@@ -31,3 +18,31 @@ html
         tr
           td #{account.name}
           td #{account.address}
+    
+    h2 Create Account
+    form(method='POST' action='/manageAccounts/create')
+      div
+        label(for='newAccountName') Name: 
+        input#newAccountName(type='text' name='newAccountName')
+      div
+        label(for='newAccountAmount') Amount (Base reserve = 20 XRP): 
+        input#newAccountAmount(type='text' name='newAccountAmount')
+      div
+        label(for='sourceAccount') Source account:
+        select(name='sourceAccount')
+          each account, i in accounts
+            option(value=i) #{account.name} (#{account.address})
+      button(type='submit') Create
+
+    h2 Add Existing Account
+    form(method='POST' action='/manageAccounts/addExisting')
+      div
+        label(for='name') Name:
+        input#name(type='text' name='name')
+      div
+        label(for='address') Address:
+        input#address(type='text' name='address')
+      div
+        label(for='secret') Secret:
+        input#secret(type='text' name='secret')
+      button(type='submit') Add

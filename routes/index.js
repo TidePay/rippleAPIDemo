@@ -1,11 +1,13 @@
 'use strict';
 var request = require('request');
+var fs = require('fs');
 
 const RippleAPI = require('ripple-lib').RippleAPI;
 var rapi;
 
 const HOST_URL = 'http://localhost:3000';   // TODO: use req.hostname to get this
 const ACCOUNT_DATA_MAX_TRANSACTIONS = 10;
+const ACCOUNT_FILE_PATH = 'account.txt';
 
 // list of rippled websocket
 var serverList = [
@@ -72,13 +74,33 @@ exports.connectToServer = function(req, res) {
 
         rapi.connect().then(() => {
             console.log('Connected to ' + req.body.server);
-            res.redirect('/main');
+
+            // read ACCOUNT_FILE_PATH
+            fs.readFile(ACCOUNT_FILE_PATH, function(err, data) {
+                if (err) {
+                    console.error(err);
+                } else {
+                    var accountData = data.toString().split('},');
+                    var i;
+                    for (i = 0; i < accountData.length; i++) {
+                        var str = accountData[i].replace(/\r?\n/g, '');
+                        if (i < accountData.length - 1) {
+                            str += '}';
+                        }
+                        var record = JSON.parse(str);
+                        accountList.push(record);
+                    }
+                }
+                res.redirect('/main');
+            });
+
+            // listen to ledger event
+            //rapi.on('ledger', onValidatedLedger);
+
         }).catch(err => {
+            console.log(err);
             res.send('Cannot connect to ' + req.body.server + '!');
         });
-
-        // listen to ledger event
-        //rapi.on('ledger', onValidatedLedger);
     }
 };
 
@@ -238,25 +260,113 @@ exports.showAccountList = function(req, res) {
     res.render('accountList', {'accounts': accountList});
 };
 
-exports.addAccount = function(req, res) {
+function checkAccountExistence(newAccount) {
     var error;
     var i;
     for (i = 0; i < accountList.length; i++) {
         var account = accountList[i];
-        if (account.name == req.body.name) {
+        if (account.name == newAccount.name) {
             error = 'Name already exists';
             break;
         }
-        if (account.address == req.body.address) {
+        if (account.address == newAccount.address) {
             error = 'Address already exists';
             break;
         }
     }
+    return error;
+}
+
+function addAccountToList(newAccount) {
+    var error;
+    accountList.push(newAccount);
+
+    // write to ACCOUNT_FILE_PATH
+    try {
+        var str = '';
+        for (i = 0; i < accountList.length; i++) {
+            var account = accountList[i];
+            str += JSON.stringify(accountList[i], null, 2);
+            if (i < accountList.length - 1) {
+                str += ',\n';
+            }
+        }
+        fs.writeFileSync(ACCOUNT_FILE_PATH, str);
+    } catch (err) {
+        error = 'Account created (' + newAccount.address + ')' + ' but cannot write to file ' + ACCOUNT_FILE_PATH + '.';
+    }
+    return error;
+};
+
+exports.addExistingAccount = function(req, res) {
+    var newAccount = new Account(req.body.name, req.body.address, req.body.secret);
+    var error = checkAccountExistence(newAccount);
     if (!error) {
-        var newAccount = new Account(req.body.name, req.body.address, req.body.secret);
-        accountList.push(newAccount);
+         error = addAccountToList(newAccount);
     }
     res.render('accountList', {'accounts': accountList, 'errorMessage': error});
+};
+
+exports.createAccount = function(req, res) {
+    // generate address
+    var newAddress = rapi.generateAddress();
+
+    var newAccount = new Account(req.body.newAccountName, newAddress.address, newAddress.secret);
+    var error = checkAccountExistence(newAccount);
+    if (error) {
+        res.render('accountList', {'accounts': accountList, 'errorMessage': error});
+        return;
+    }
+
+    // send payment to new account
+    const sourceAccount = accountList[req.body.sourceAccount];
+    const currency = 'XRP';
+    const amount = req.body.newAccountAmount;
+    const payment = {
+        'source': {
+            'address': sourceAccount.address,
+            'maxAmount': {
+                'currency': currency,
+                'value': amount
+            }
+        },
+        'destination': {
+            'address': newAccount.address,
+            'amount': {
+                'currency': currency,
+                'value': amount
+            }
+        }
+    };
+    var result = new Object();
+    console.log('preparePayment');
+    rapi.preparePayment(sourceAccount.address, payment).then(prepared => {
+        console.log('prepare:');
+        console.log(prepared);
+        console.log('sign');
+        return rapi.sign(prepared.txJSON, sourceAccount.secret);
+    }).then(signed => {
+        result.transactionID = signed.id;
+        console.log('Transaction ID: ' + signed.id);
+        console.log('submit');
+        return rapi.submit(signed.signedTransaction);
+    }).then(submitted => {
+        console.log('Result code: ' + submitted.resultCode);
+        console.log('Result message: ' + submitted.resultMessage);
+        result.resultCode = submitted.resultCode;
+        result.resultMessage = submitted.resultMessage;
+
+        var error;
+        if (result.resultCode != 'tesSUCCESS') {
+            error = 'Account is not created (' + result.resultCode + ': ' + result.resultMessage + ').';
+        } else {
+            error = addAccountToList(newAccount);
+        }
+        res.render('accountList', {'accounts': accountList, 'errorMessage': error});
+    }).catch(err => {
+        var error = 'Failed to create account (' + err.name + ': ' + err.message + ')';
+        res.render('accountList', {'accounts': accountList, 'errorMessage': error});       
+    });
 };
 
 // operation: query account data
@@ -402,6 +512,41 @@ exports.changeTrustline = function(req, res, next) {
     var result = new Object();
     console.log('prepareSettings');
     rapi.prepareTrustline(address, trustline).then(prepared => {
+        console.log('prepare:');
+        console.log(prepared);
+        console.log('sign');
+        return rapi.sign(prepared.txJSON, secret);
+    }).then(signed => {
+        result.transactionID = signed.id;
+        console.log('Transaction ID: ' + signed.id);
+        console.log('submit');
+        return rapi.submit(signed.signedTransaction);
+    }).then(submitted => {
+        console.log('Result code: ' + submitted.resultCode);
+        console.log('Result message: ' + submitted.resultMessage);
+        result.resultCode = submitted.resultCode;
+        result.resultMessage = submitted.resultMessage;
+        res.render('transactionResult', result);
+    }).catch(err => {
+        next(err);
+    });
+};
+
+// transaction operation: order
+
+exports.showChangeOrder = function(req, res) {
+    res.render('changeSettings');
+};
+
+exports.changeOrder = function(req, res, next) {
+    const address = req.body.address;
+    const secret = req.body.secret;
+    const settings = {
+        'defaultRipple': req.body.defaultRipple ? true : false
+    };
+    var result = new Object();
+    console.log('prepareSettings');
+    rapi.prepareSettings(address, settings).then(prepared => {
         console.log('prepare:');
         console.log(prepared);
         console.log('sign');
