@@ -53,13 +53,17 @@ var Account = function(name, address, secret) {
     this.secret = secret;
 };
 
-var Account = function(object) {
-    this.name = object.name;
-    this.address = object.address;
-    this.secret = object.secret;
-};
-
 var accountList = [];
+
+// helper function to get account by its address
+function getAccountByAddress(address) {
+    var i;
+    for (i = 0; i < accountList.length; i++) {
+        if (accountList[i].address == address) {
+            return accountList[i];
+        }
+    }
+};
 
 exports.displayServerList = function(req, res) {
     if (!rapi) {
@@ -94,7 +98,8 @@ exports.connectToServer = function(req, res) {
                         if (i < accountData.length - 1) {
                             str += '}';
                         }
-                        var record = new Account(JSON.parse(str));
+                        var record = JSON.parse(str);
+                        var account = new Account(record.name, record.address, record.secret);
                         accountList.push(record);
                     }
                 }
@@ -520,7 +525,8 @@ exports.changeTrustline = function(req, res, next) {
     const trustline = {
         'currency': req.body.currency,
         'counterparty': counterpartyAccount.address,
-        'limit': req.body.limit
+        'limit': req.body.limit,
+        'ripplingDisabled': req.body.ripplingDisabled ? true : false
     };
     var result = new Object();
     console.log('prepareSettings');
