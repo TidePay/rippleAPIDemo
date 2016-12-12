@@ -39,7 +39,7 @@ var operationList = [
 
 // custom classes
 var AccountData = function(name, address) {
-    this.name = name;
+    this.accountName = name;
     this.accountAddress = address;
     this.balances = [];
     this.transactions = [];
@@ -51,6 +51,12 @@ var Account = function(name, address, secret) {
     this.name = name;
     this.address = address;
     this.secret = secret;
+};
+
+var Account = function(object) {
+    this.name = object.name;
+    this.address = object.address;
+    this.secret = object.secret;
 };
 
 var accountList = [];
@@ -88,7 +94,7 @@ exports.connectToServer = function(req, res) {
                         if (i < accountData.length - 1) {
                             str += '}';
                         }
-                        var record = JSON.parse(str);
+                        var record = new Account(JSON.parse(str));
                         accountList.push(record);
                     }
                 }
@@ -427,10 +433,12 @@ exports.makePayment = function(req, res, next) {
         'value': req.body.destinationAmount
     }
     if (sourceMaxAmount.currency != 'XRP' && req.body.sourceCounterparty) {
-        sourceMaxAmount.counterparty = req.body.sourceCounterparty;
+        const sourceCounterparty = accountList[req.body.sourceCounterparty];
+        sourceMaxAmount.counterparty = sourceCounterparty.address;
     }
     if (destinationAmount.currency != 'XRP' && req.body.destinationCounterparty) {
-        destinationAmount.counterparty = req.body.destinationCounterparty;
+        const destinationCounterparty = accountList[req.body.destinationCounterparty];
+        destinationAmount.counterparty = destinationCounterparty.address;
     }
 
     const payment = {

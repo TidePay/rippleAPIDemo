@@ -13,8 +13,7 @@ html
             option(value=i) #{account.name} (#{account.address})
       button(type='submit') Submit
     
-    h1 #{data.accountName}
-    p #{data.accountAddress}
+    h1 #{data.accountName} (#{data.accountAddress})
     if error
         p(style='color:red') #{error.name}: #{error.message}
 
