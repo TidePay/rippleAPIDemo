@@ -7,11 +7,10 @@ html
     h1 Change Settings
     form(method='POST' action='')
       div
-        label(for='address') Address:
-        input#address(type='text' name='address')
-      div
-        label(for='secret') Secret:
-        input#secret(type='text' name='secret')
+        label(for='account') Account:
+        select(name='account')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
       div
         label(for='defaultRipple') Default Ripple:
         input#defaultRipple(type='checkbox' name='defaultRipple')

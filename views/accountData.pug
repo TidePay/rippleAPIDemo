@@ -7,16 +7,14 @@ html
     h1 Get Account Data
     form(method='POST' action='')
       div
-        label(for='address') Address:
-        input(type='text' name='address')
-      div
         label(for='account') Account:
         select(name='account')
           each account, i in accountList
             option(value=i) #{account.name} (#{account.address})
       button(type='submit') Submit
     
-    h1 #{data.accountAddress}
+    h1 #{data.accountName}
+    p #{data.accountAddress}
     if error
         p(style='color:red') #{error.name}: #{error.message}
 

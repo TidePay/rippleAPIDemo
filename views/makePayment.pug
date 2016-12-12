@@ -6,31 +6,38 @@ html
     a(href='../main') [back to main]
     h1 Make Payment
     form(method='POST' action='')
+      h2 From
       div
-        label(for='sourceAddress') Source Address:
-        input#sourceAddress(type='text' name='sourceAddress')
+        label(for='sourceAccount') Account:
+        select(name='sourceAccount')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
       div
-        label(for='sourceSecret') Source Secret:
-        input#sourceSecret(type='text' name='sourceSecret')
-      div
-        label(for='sourceCurrency') Source Currency:
+        label(for='sourceCurrency') Currency:
         input#sourceCurrency(type='text' name='sourceCurrency')
       div
-        label(for='sourceMaxAmount') Source Max Amount:
+        label(for='sourceMaxAmount') Max Amount:
         input#sourceMaxAmount(type='text' name='sourceMaxAmount')
       div
-        label(for='sourceCounterparty') Source Counterparty:
-        input#sourceCounterparty(type='text' name='sourceCounterparty')
+        label(for='sourceCounterparty') Counterparty:
+        select(name='sourceCounterparty')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
+      H2 To
       div
-        label(for='destinationAddress') Destination Address:
-        input#destinationAddress(type='text' name='destinationAddress')
+        label(for='destinationAccount') Account:
+        select(name='destinationAccount')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
       div
-        label(for='destinationCurrency') Destination Currency:
+        label(for='destinationCurrency') Currency:
         input#destinationCurrency(type='text' name='destinationCurrency')
       div
-        label(for='destinationAmount') Destination Amount:
+        label(for='destinationAmount') Amount:
         input#destinationAmount(type='text' name='destinationAmount')
       div
-        label(for='destinationCounterparty') Destination Counterparty:
-        input#destinationCounterparty(type='text' name='destinationCounterparty')
+        label(for='destinationCounterparty') Counterparty:
+        select(name='destinationCounterparty')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
       button(type='submit') Submit

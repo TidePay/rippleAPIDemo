@@ -38,7 +38,8 @@ var operationList = [
 ];
 
 // custom classes
-var AccountData = function(address) {
+var AccountData = function(name, address) {
+    this.name = name;
     this.accountAddress = address;
     this.balances = [];
     this.transactions = [];
@@ -284,6 +285,7 @@ function addAccountToList(newAccount) {
     // write to ACCOUNT_FILE_PATH
     try {
         var str = '';
+        var i;
         for (i = 0; i < accountList.length; i++) {
             var account = accountList[i];
             str += JSON.stringify(accountList[i], null, 2);
@@ -293,7 +295,8 @@ function addAccountToList(newAccount) {
         }
         fs.writeFileSync(ACCOUNT_FILE_PATH, str);
     } catch (err) {
-        error = 'Account created (' + newAccount.address + ')' + ' but cannot write to file ' + ACCOUNT_FILE_PATH + '.';
+        console.error(err);
+        error = 'Account created (' + newAccount.address + ')' + ' but cannot write to file ' + ACCOUNT_FILE_PATH + ' - ' + err.message;
     }
     return error;
 };
@@ -381,22 +384,22 @@ exports.showQueryAccount = function(req, res) {
 };
 
 exports.queryAccount = function(req, res, next) {
-    const address = req.body.address ? req.body.address : accountList[req.body.account].address;
+    const account = accountList[req.body.account];
     var pugParam = {
-        'data': new AccountData(address),
+        'data': new AccountData(account.name, account.address),
         'maxTransactions': ACCOUNT_DATA_MAX_TRANSACTIONS,
         'accountList': accountList
     };
-    rapi.getBalances(address).then(info => {
+    rapi.getBalances(account.address).then(info => {
         pugParam.data.balances = info;
         var options = {'limit': ACCOUNT_DATA_MAX_TRANSACTIONS};
-        return rapi.getTransactions(address, options);
+        return rapi.getTransactions(account.address, options);
     }).then(transactions => {
         pugParam.data.transactions = transactions;
-        return rapi.getOrders(address);
+        return rapi.getOrders(account.address);
     }).then(info => {
         pugParam.data.orders = info;
-        return rapi.getTrustlines(address);
+        return rapi.getTrustlines(account.address);
     }).then(info => {
         pugParam.data.trustlines = info;
         res.render('accountData', pugParam);
@@ -409,41 +412,44 @@ exports.queryAccount = function(req, res, next) {
 // transaction operation: payment
 
 exports.showMakePayment = function(req, res) {
-    res.render('makePayment');
+    res.render('makePayment', {'accountList': accountList});
 };
 
 exports.makePayment = function(req, res, next) {
-    const address = req.body.sourceAddress;
-    const secret = req.body.sourceSecret;
+    const source = accountList[req.body.sourceAccount];
+    const destination = accountList[req.body.destinationAccount];
+    var sourceMaxAmount = {
+        'currency': req.body.sourceCurrency,
+        'value': req.body.sourceMaxAmount
+    };
+    var destinationAmount = {
+        'currency': req.body.destinationCurrency,
+        'value': req.body.destinationAmount
+    }
+    if (sourceMaxAmount.currency != 'XRP' && req.body.sourceCounterparty) {
+        sourceMaxAmount.counterparty = req.body.sourceCounterparty;
+    }
+    if (destinationAmount.currency != 'XRP' && req.body.destinationCounterparty) {
+        destinationAmount.counterparty = req.body.destinationCounterparty;
+    }
+
     const payment = {
         'source': {
-            'address': req.body.sourceAddress,
-            'maxAmount': {
-                'currency': req.body.sourceCurrency,
-                'value': req.body.sourceMaxAmount
-            }
+            'address': source.address,
+            'maxAmount': sourceMaxAmount
         },
         'destination': {
-            'address': req.body.destinationAddress,
-            'amount': {
-                'currency': req.body.destinationCurrency,
-                'value': req.body.destinationAmount
-            }
+            'address': destination.address,
+            'amount': destinationAmount
         }
     };
-    if (req.body.sourceCurrency != 'XRP' && req.body.sourceCounterparty) {
-        payment.source.maxAmount.counterparty = req.body.sourceCounterparty;
-    }
-    if (req.body.destinationCurrency != 'XRP' && req.body.destinationCounterparty) {
-        payment.destination.amount.counterparty = req.body.destinationCounterparty;
-    }
     var result = new Object();
     console.log('preparePayment');
-    rapi.preparePayment(address, payment).then(prepared => {
+    rapi.preparePayment(source.address, payment).then(prepared => {
         console.log('prepare:');
         console.log(prepared);
         console.log('sign');
-        return rapi.sign(prepared.txJSON, secret);
+        return rapi.sign(prepared.txJSON, source.secret);
     }).then(signed => {
         result.transactionID = signed.id;
         console.log('Transaction ID: ' + signed.id);
@@ -463,22 +469,21 @@ exports.makePayment = function(req, res, next) {
 // transaction operation: settings
 
 exports.showChangeSettings = function(req, res) {
-    res.render('changeSettings');
+    res.render('changeSettings', {'accountList': accountList});
 };
 
 exports.changeSettings = function(req, res, next) {
-    const address = req.body.address;
-    const secret = req.body.secret;
+    const account = accountList[req.body.account];
     const settings = {
         'defaultRipple': req.body.defaultRipple ? true : false
     };
     var result = new Object();
     console.log('prepareSettings');
-    rapi.prepareSettings(address, settings).then(prepared => {
+    rapi.prepareSettings(account.address, settings).then(prepared => {
         console.log('prepare:');
         console.log(prepared);
         console.log('sign');
-        return rapi.sign(prepared.txJSON, secret);
+        return rapi.sign(prepared.txJSON, account.secret);
     }).then(signed => {
         result.transactionID = signed.id;
         console.log('Transaction ID: ' + signed.id);
@@ -502,20 +507,20 @@ exports.showChangeTrustline = function(req, res) {
 };
 
 exports.changeTrustline = function(req, res, next) {
-    const address = req.body.address ? req.body.address : accountList[req.body.account].address;
-    const secret = req.body.secret ? req.body.address : accountList[req.body.account].secret;
+    const account = accountList[req.body.account];
+    const counterpartyAccount = accountList[req.body.counterpartyAccount];
     const trustline = {
         'currency': req.body.currency,
-        'counterparty': req.body.counterparty ? req.body.counterparty : accountList[req.body.counterpartyAccount].address,
+        'counterparty': counterpartyAccount.address,
         'limit': req.body.limit
     };
     var result = new Object();
     console.log('prepareSettings');
-    rapi.prepareTrustline(address, trustline).then(prepared => {
+    rapi.prepareTrustline(account.address, trustline).then(prepared => {
         console.log('prepare:');
         console.log(prepared);
         console.log('sign');
-        return rapi.sign(prepared.txJSON, secret);
+        return rapi.sign(prepared.txJSON, account.secret);
     }).then(signed => {
         result.transactionID = signed.id;
         console.log('Transaction ID: ' + signed.id);
