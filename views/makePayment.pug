@@ -23,7 +23,7 @@ html
         select(name='sourceCounterparty')
           each account, i in accountList
             option(value=i) #{account.name} (#{account.address})
-      H2 To
+      h2 To
       div
         label(for='destinationAccount') Account:
         select(name='destinationAccount')
@@ -40,4 +40,10 @@ html
         select(name='destinationCounterparty')
           each account, i in accountList
             option(value=i) #{account.name} (#{account.address})
+      
+      h2 Path
+      div
+        label(for='paths') Paths:
+        input#paths(type='text' name='paths' width='300')
+      br
       button(type='submit') Submit
