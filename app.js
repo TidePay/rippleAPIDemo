@@ -1,16 +1,3 @@
-// var express = require('express');
-// var app = express();
-// var path = require('path');
-
-// app.use('/scripts', express.static(path.join(__dirname, 'scripts')));
-
-// // viewed at http://localhost:8080
-// app.get('/', function(req, res) {
-//     res.sendFile(path.join(__dirname + '/index.html'));
-// });
-
-// app.listen(8080);
-
 'use strict';
 var express = require('express');
 var routes = require('./routes');
@@ -62,4 +49,19 @@ app.use(routes.handleError);
 
 app.listen(3000, () => {
     console.log('Example app listening on port 3000!')
+});
+
+process.on('SIGTERM',function() {
+    console.log("caught sigterm");
+    process.exit();
+});
+process.on('SIGINT',function() {
+    console.log("caught sigint");
+    process.exit();
+});
+process.on('exit',function() {
+    console.log("Shutting down.");
+    // exit code (release resource)
+
+    console.log("Done");
 });
