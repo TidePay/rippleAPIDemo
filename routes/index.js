@@ -32,6 +32,7 @@ var commandList = [
 var operationList = [
     {name: 'Manage Accounts', path: '/manageAccounts'},
     {name: 'Get Account Data', path: '/queryAccount'},
+    {name: 'Get Paths', path: '/getPaths'},
     {name: 'Make Payment', path: '/transaction/payment'},
     {name: 'Change Settings', path: '/transaction/settings'},
     {name: 'Change Trustline', path: '/transaction/trustline'}
@@ -420,6 +421,50 @@ exports.queryAccount = function(req, res, next) {
     });
 };
 
+// operation: get paths
+
+exports.showGetPaths = function(req, res) {
+    res.render('getPaths', {'accountList': accountList});
+};
+
+exports.getPaths = function(req, res, next) {
+    const source = accountList[req.body.sourceAccount];
+    const destination = accountList[req.body.destinationAccount];
+    var destinationAmount = {
+        'currency': req.body.destinationCurrency,
+        'value': req.body.destinationAmount
+    }
+    if (destinationAmount.currency != 'XRP' && req.body.destinationCounterparty) {
+        const destinationCounterparty = accountList[req.body.destinationCounterparty];
+        destinationAmount.counterparty = destinationCounterparty.address;
+    }
+
+    const pathfind = {
+        'source': {
+            'address' : source.address
+        },
+        'destination': {
+            'address': destination.address,
+            'amount': destinationAmount
+        }
+    };
+    var result = new Object();
+    console.log('getPaths');
+    rapi.getPaths(pathfind).then(paths => {
+        result.rawJSON = JSON.stringify(paths, null, 2);
+        result.paths = [];
+        var i;
+        for (i = 0; i < paths.length; i++) {
+            var path = paths[i];
+            path.pathsObject = JSON.parse(path.paths);
+            result.paths.push(path);
+        }
+        res.render('getPathsResult', {'accountList': accountList, 'result': result});
+    }).catch(err => {
+        next(err);
+    });
+};
+
 // transaction operation: payment
 
 exports.showMakePayment = function(req, res) {
@@ -446,7 +491,7 @@ exports.makePayment = function(req, res, next) {
         destinationAmount.counterparty = destinationCounterparty.address;
     }
 
-    const payment = {
+    var payment = {
         'source': {
             'address': source.address,
             'maxAmount': sourceMaxAmount
@@ -456,6 +501,9 @@ exports.makePayment = function(req, res, next) {
             'amount': destinationAmount
         }
     };
+    if (req.body.paths && req.body.paths != '') {
+        payment.paths = req.body.paths;
+    }
     var result = new Object();
     console.log('preparePayment');
     rapi.preparePayment(source.address, payment).then(prepared => {

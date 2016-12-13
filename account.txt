@@ -37,4 +37,44 @@
   "name": "Emily",
   "address": "rQpAa33LmSi55NduH74ye3e3PHr85L9z8A",
   "secret": "snkgeArHHcV4zKDmqk21Mr4B2hexz"
+},
+{
+  "name": "Fred",
+  "address": "rwng7VMdPsZY1MNoaXDSjHkavdPAaSJdZn",
+  "secret": "shQXLtFsKoorz8sGSWGuaG94LC41x"
+},
+{
+  "name": "A1",
+  "address": "r4vgVUYj3uvN8cEeyAv76Zw7kWavqjCysw",
+  "secret": "snpfADq2p6GgGGmEkuT4Kmu1ugiCN"
+},
+{
+  "name": "A2",
+  "address": "r4tY2CGJ64o86b4rBpbt4JbUHdAE7RxBFu",
+  "secret": "saUB6WVu8TvTP7HoGv5g8h3oFHhoY"
+},
+{
+  "name": "A3",
+  "address": "rwxJsLVFLKk4oTwx7AUHNNkC8cmGu2nkGf",
+  "secret": "spy4V99oSB4JSQjfY15M21Q9PX92q"
+},
+{
+  "name": "G1",
+  "address": "rpuT1TTMecbMz15ZDtGgCJCiLCb4VyJqaG",
+  "secret": "sh1GmMrCTTBg37M8KiRJLqiYs6ruc"
+},
+{
+  "name": "G2",
+  "address": "rD6vXuXNxGYWF19wS9kB2HqVhi8EcXpjeB",
+  "secret": "shcSp7cQps1CGUbrxNX8iP5iyoobW"
+},
+{
+  "name": "Zoe",
+  "address": "r3vsoQZMaekKxGRV3C8yCcGqxuPwDFfmXw",
+  "secret": "shJZ2Rev3mcSDttefbLSp3Nw5dbrH"
+},
+{
+  "name": "A4",
+  "address": "rs3XTMrumqjmBU91hv3MwjSEvuc1nkTJTF",
+  "secret": "shJeSTCjuZ5QodjkWE2RTcq7tnwVQ"
 }

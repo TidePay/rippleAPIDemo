@@ -1,0 +1,40 @@
+doctype html
+html
+  head
+    title="Get Paths Result"
+  body
+    h1 Get Paths Result
+
+    table(border=1)
+      tr
+        th Source
+        th Destination
+        th Paths
+        th Paths String
+      each path in result.paths
+        tr
+          td(rowspan=path.pathsObject.length+1)
+            | #{path.source.address}
+            br
+            br
+            | #{path.source.maxAmount.value} #{path.source.maxAmount.currency}
+          td(rowspan=path.pathsObject.length+1)
+            | #{path.destination.address}
+            br
+            br
+            | #{path.destination.amount.value} #{path.destination.amount.currency}
+          td
+          td(rowspan=path.pathsObject.length+1)
+            | #{path.paths}
+        each pathObject in path.pathsObject
+          tr
+            td
+              ul
+                each step in pathObject
+                  li #{step.account}
+
+    p Raw JSON result:
+    pre #{result.rawJSON}
+    
+    br
+    a(href='../main') [back to main]

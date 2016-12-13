@@ -1,0 +1,32 @@
+doctype html
+html
+  head
+    title="Get Paths"
+  body
+    a(href='../main') [back to main]
+    h1 Get Paths
+    form(method='POST' action='')
+      h2 From
+      div
+        label(for='sourceAccount') Account:
+        select(name='sourceAccount')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
+      h2 To
+      div
+        label(for='destinationAccount') Account:
+        select(name='destinationAccount')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
+      div
+        label(for='destinationCurrency') Currency:
+        input#destinationCurrency(type='text' name='destinationCurrency')
+      div
+        label(for='destinationAmount') Amount:
+        input#destinationAmount(type='text' name='destinationAmount')
+      div
+        label(for='destinationCounterparty') Counterparty:
+        select(name='destinationCounterparty')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
+      button(type='submit') Submit
