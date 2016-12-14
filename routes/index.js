@@ -608,18 +608,40 @@ exports.getPaths = function(req, res, next) {
             'amount': destinationAmount
         }
     };
-    var result = new Object();
+    var processedResult = new Object();
     console.log('getPaths');
-    rapi.getPaths(pathfind).then(paths => {
-        result.rawJSON = JSON.stringify(paths, null, 2);
-        result.paths = [];
-        var i;
-        for (i = 0; i < paths.length; i++) {
-            var path = paths[i];
-            path.pathsObject = JSON.parse(path.paths);
-            result.paths.push(path);
+    rapi.getPaths(pathfind).then(results => {
+        processedResult.rawJSON = JSON.stringify(results, null, 2);
+        processedResult.srcDstPairs = [];
+        for (var i = 0; i < results.length; i++) {
+            var pair = results[i];
+            pair.source.account = getAccountNameByAddress(pair.source.address);
+            pair.destination.account = getAccountNameByAddress(pair.destination.address);
+
+            if (pair.source.maxAmount.hasOwnProperty('counterparty')) {
+                pair.source.maxAmount.counterparty = getAccountNameByAddress(pair.source.maxAmount.counterparty);
+            }
+            if (pair.destination.amount.hasOwnProperty('counterparty')) {
+                pair.destination.amount.counterparty = getAccountNameByAddress(pair.destination.amount.counterparty);
+            }
+
+            pair.pathsObject = JSON.parse(pair.paths);
+            for (var j = 0; j < pair.pathsObject.length; j++) {
+                var path = pair.pathsObject[j];
+                for (var k = 0; k < path.length; k++) {
+                    var step = path[k];
+                    if (step.hasOwnProperty('account')) {
+                        step.account = getAccountNameByAddress(step.account);
+                    }
+                    if (step.hasOwnProperty('issuer')) {
+                        step.issuer = getAccountNameByAddress(step.issuer);
+                    }
+                }
+            }
+
+            processedResult.srcDstPairs.push(pair);
         }
-        res.render('getPathsResult', {'accountList': accountList, 'result': result});
+        res.render('getPathsResult', {'accountList': accountList, 'result': processedResult});
     }).catch(err => {
         next(err);
     });

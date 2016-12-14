@@ -11,27 +11,28 @@ html
         th Destination
         th Paths
         th Paths String
-      each path in result.paths
-        tr
-          td(rowspan=path.pathsObject.length+1)
-            | #{path.source.address}
-            br
-            br
-            | #{path.source.maxAmount.value} #{path.source.maxAmount.currency}
-          td(rowspan=path.pathsObject.length+1)
-            | #{path.destination.address}
-            br
-            br
-            | #{path.destination.amount.value} #{path.destination.amount.currency}
-          td
-          td(rowspan=path.pathsObject.length+1)
-            | #{path.paths}
-        each pathObject in path.pathsObject
+      each pair in result.srcDstPairs
+        each pathObject, index in pair.pathsObject
           tr
+            if index == 0
+              td(rowspan=pair.pathsObject.length)
+                | #{pair.source.account}
+                br
+                | #{pair.source.maxAmount.value} #{pair.source.maxAmount.currency}
+              td(rowspan=pair.pathsObject.length)
+                | #{pair.destination.account}
+                br
+                if pair.destination.amount.counterparty
+                  | #{pair.destination.amount.value} #{pair.destination.amount.currency}.#{pair.destination.amount.counterparty}
+                else
+                  | #{pair.destination.amount.value} #{pair.destination.amount.currency}
             td
               ul
                 each step in pathObject
                   li #{step.account}
+            if index == 0
+              td(rowspan=pair.pathsObject.length)
+                textarea(rows=4 cols=50 style='resize:none') #{pair.paths}
 
     p Raw JSON result:
     pre #{result.rawJSON}
