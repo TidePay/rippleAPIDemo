@@ -38,6 +38,8 @@ app.get('/queryAccount', routes.showQueryAccount);
 app.post('/queryAccount', routes.queryAccount);
 app.get('/getPaths', routes.showGetPaths);
 app.post('/getPaths', routes.getPaths);
+app.get('/getOrderbook', routes.showGetOrderbook);
+app.post('/getOrderbook', routes.getOrderbook);
 app.get('/transaction/payment', routes.showMakePayment);
 app.post('/transaction/payment', routes.makePayment);
 app.get('/transaction/settings', routes.showChangeSettings);

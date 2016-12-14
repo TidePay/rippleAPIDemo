@@ -1,0 +1,26 @@
+doctype html
+html
+  head
+    title="Get Order Book"
+  body
+    a(href='../main') [back to main]
+    h1 Get Order Book
+    form(method='POST' action='')
+      div
+        label(for='accountMenu') Account:
+        select#accountMenu(name='accountIndex')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
+      div
+        label(for='baseCurrency') Base currency:
+        input#baseCurrency(type='text' name='baseCurrency')
+      div
+        label(for='baseCounterparty') Base issuer:
+        input#baseCounterparty(type='text' name='baseCounterparty')
+      div
+        label(for='counterCurrency') Counter currency:
+        input#counterCurrency(type='text' name='counterCurrency')
+      div
+        label(for='counterCounterparty') Counter issuer:
+        input#counterCounterparty(type='text' name='counterCounterparty')
+      button(type='submit') Submit

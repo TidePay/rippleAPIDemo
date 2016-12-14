@@ -32,6 +32,7 @@ var commandList = [
 var operationList = [
     {name: 'Manage Accounts', path: '/manageAccounts'},
     {name: 'Get Account Data', path: '/queryAccount'},
+    {name: 'Get Order Book', path: '/getOrderbook'},
     {name: 'Get Paths', path: '/getPaths'},
     {name: 'Make Payment', path: '/transaction/payment'},
     {name: 'Change Settings', path: '/transaction/settings'},
@@ -644,6 +645,36 @@ exports.getPaths = function(req, res, next) {
         res.render('getPathsResult', {'accountList': accountList, 'result': processedResult});
     }).catch(err => {
         next(err);
+    });
+};
+
+// operation: get order book
+
+exports.showGetOrderbook = function(req, res, next) {
+    res.render('getOrderbook', {'accountList': accountList});
+};
+
+exports.getOrderbook = function(req, res) {
+    const account = accountList[req.body.accountIndex];
+    var orderbookRequest = {
+        'base': {
+            'currency': req.body.baseCurrency
+        },
+        'counter': {
+            'currency': req.body.counterCurrency
+        }
+    };
+    if (orderbookRequest.base.currency != 'XRP') {
+        orderbookRequest.base.counterparty = req.body.baseCounterparty;
+    }
+    if (orderbookRequest.counter.currency != 'XRP') {
+        orderbookRequest.counter.counterparty = req.body.counterCounterparty;
+    }
+    rapi.getOrderbook(account.address, orderbookRequest).then(orderbook => {
+        var result = {
+            'rawJSON': JSON.stringify(orderbook, null, 2)
+        };
+        res.render('getOrderbookResult', {'accountList': accountList, 'result': result});
     });
 };
 
