@@ -574,6 +574,8 @@ exports.changeTrustline = function(req, res, next) {
         'currency': req.body.currency,
         'counterparty': counterpartyAccount.address,
         'limit': req.body.limit,
+        'qualityIn': parseFloat(req.body.qualityIn),
+        'qualityOut': parseFloat(req.body.qualityOut),
         'ripplingDisabled': req.body.ripplingDisabled ? true : false
     };
     var result = new Object();
