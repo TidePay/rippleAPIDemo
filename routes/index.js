@@ -55,14 +55,14 @@ var Account = function(name, address, secret) {
 };
 
 var accountList = [];
+var accountAddressNameMap = new Object();
 
-// helper function to get account by its address
-function getAccountByAddress(address) {
-    var i;
-    for (i = 0; i < accountList.length; i++) {
-        if (accountList[i].address == address) {
-            return accountList[i];
-        }
+// helper function to get account name by its address
+function getAccountNameByAddress(address) {
+    if (accountAddressNameMap.hasOwnProperty(address)) {
+        return accountAddressNameMap[address];
+    } else {
+        return address;
     }
 };
 
@@ -102,6 +102,7 @@ exports.connectToServer = function(req, res) {
                         var record = JSON.parse(str);
                         var account = new Account(record.name, record.address, record.secret);
                         accountList.push(record);
+                        accountAddressNameMap[record.address] = record.name;
                     }
                 }
                 res.redirect('/main');
@@ -395,6 +396,165 @@ exports.showQueryAccount = function(req, res) {
     res.render('accountData', pugParam);
 };
 
+function processAccountBalances(balances) {
+    var processed = [];
+    for (var i = 0; i < balances.length; i++) {
+        var p = new Object();
+        const b = balances[i];
+
+        p.currency = b.currency;
+        p.value = b.value;
+        p.counterparty = getAccountNameByAddress(b.counterparty);
+
+        processed.push(p);
+    }
+    return processed;
+}
+
+function processAccountTrustlines(trustlines, account) {
+    var processed = [];
+    for (var i = 0; i < trustlines.length; i++) {
+        var p = new Object();
+        const t = trustlines[i];
+
+        if (t.specification.limit == 0 && t.counterparty.limit == 0 && t.state.balance == 0) {
+            continue;   // no trust lines between two parties
+        }
+
+        const counterparty = getAccountNameByAddress(t.specification.counterparty);
+
+        p.currency = t.specification.currency;
+        p.trustDetails = [];
+
+        // grant
+        if (t.specification.limit > 0 || t.state.balance > 0) {
+            var trustDetail = new Object();
+            trustDetail.direction = account.name + ' -> ' + counterparty;
+            trustDetail.limit = t.specification.limit;
+            if (t.specification.hasOwnProperty('authorized')) {
+                trustDetail.authorized = t.specification.authorized;
+            }
+            if (t.specification.hasOwnProperty('frozen')) {
+                trustDetail.frozen = t.specification.frozen;
+            }
+            if (t.specification.hasOwnProperty('qualityIn')) {
+                trustDetail.qualityIn = t.specification.qualityIn;
+            }
+            if (t.specification.hasOwnProperty('qualityOut')) {
+                trustDetail.qualityOut = t.specification.qualityOut;
+            }
+            if (t.specification.hasOwnProperty('ripplingDisabled')) {
+                trustDetail.ripplingDisabled = t.specification.ripplingDisabled;
+            }
+            trustDetail.balance = t.state.balance > 0 ? t.state.balance : 0;
+
+            p.trustDetails.push(trustDetail);
+        }
+
+        // gain
+        if (t.counterparty.limit > 0 || t.state.balance < 0) {
+            var trustDetail = new Object();
+            trustDetail.direction = account.name + ' <- ' + counterparty;
+            trustDetail.limit = t.counterparty.limit;
+            if (t.counterparty.hasOwnProperty('authorized')) {
+                trustDetail.authorized = t.counterparty.authorized;
+            }
+            if (t.counterparty.hasOwnProperty('frozen')) {
+                trustDetail.frozen = t.counterparty.frozen;
+            }
+            if (t.counterparty.hasOwnProperty('ripplingDisabled')) {
+                trustDetail.ripplingDisabled = t.counterparty.ripplingDisabled;
+            }
+            trustDetail.balance = t.state.balance < 0 ? t.state.balance : 0;
+
+            p.trustDetails.push(trustDetail);
+        }
+
+        processed.push(p);
+    }
+    return processed;
+}
+
+function processAccountTransactions(transactions, account) {
+    var processed = [];
+    for (var i = 0; i < transactions.length; i++) {
+        var p = new Object();
+        const t = transactions[i];
+        const s = t.specification;
+        p.id = t.id;
+        p.ownerAddress = t.address;
+        p.type = t.type;
+        p.sequence = t.sequence;
+        p.result = t.outcome.result;
+        p.fee = t.outcome.fee;
+        p.timestamp = t.outcome.timestamp;
+        p.ledgerVersion = t.outcome.ledgerVersion;
+        p.indexInLedger = t.outcome.indexInLedger;
+
+        p.descriptions = [];
+        switch (t.type) {
+            case 'payment':
+                const sender = getAccountNameByAddress(s.source.address);
+                const recipient = getAccountNameByAddress(s.destination.address);
+                p.descriptions.push('Sender: ' + sender);
+                p.descriptions.push('Recipient: ' + recipient);
+                if (t.specification.source.maxAmount) {
+                    p.descriptions.push('Src amount (max): ' + s.source.maxAmount.value + ' ' + s.source.maxAmount.currency);
+                    p.descriptions.push('Dst amount: ' + s.destination.amount.value + ' ' + s.destination.amount.currency);
+                } else {
+                    p.descriptions.push('Src amount: ' + s.source.amount.value + ' ' + s.source.amount.currency);
+                    p.descriptions.push('Dst amount (min): ' + s.destination.minAmount.value + ' ' + s.destination.minAmount.currency);
+                }
+                break;
+            case 'order':
+                p.descriptions.push(s.direction + ' ' + s.quantity.value + ' ' + s.quantity.currency);
+                p.descriptions.push('@ ' + s.totalPrice.value + ' ' + s.totalPrice.currency);
+                break;
+            case 'orderCancellation':
+                p.descriptions.push('Cancel order: ' + s.orderSequence);
+                break;
+            case 'trustline':
+                if (s.counterparty == account.address) {
+                    const counterparty = getAccountNameByAddress(t.address);
+                    p.descriptions.push('Gain trust from: ' + counterparty);
+                } else {
+                    const counterparty = getAccountNameByAddress(s.counterparty);
+                    p.descriptions.push('Grant trust to ' + counterparty);
+                }
+                p.descriptions.push('Limit: ' + s.limit + ' ' + s.currency);
+                break;
+            case 'settings':
+                for (var prop in s) {
+                    p.descriptions.push(prop + ': ' + s[prop]);
+                }
+                break;
+        }
+
+        p.balanceChanges = [];
+        for (var accountAddress in t.outcome.balanceChanges) {
+            const changes = t.outcome.balanceChanges[accountAddress];
+            
+            var accountChanges = new Object();
+            accountChanges.accountName = getAccountNameByAddress(accountAddress);
+            accountChanges.changes = [];
+
+            for (var j = 0; j < changes.length; j++) {
+                const change = changes[j];
+                if (change.currency == 'XRP') {
+                    accountChanges.changes.push(change.value + ' XRP');
+                } else {
+                    const counterparty = getAccountNameByAddress(change.counterparty);
+                    accountChanges.changes.push(change.value + ' ' + change.currency + '.' + counterparty);
+                }
+            }
+            p.balanceChanges.push(accountChanges);
+        }
+
+        processed.push(p);
+    }
+    return processed;
+}
+
 exports.queryAccount = function(req, res, next) {
     const account = accountList[req.body.account];
     var pugParam = {
@@ -402,18 +562,18 @@ exports.queryAccount = function(req, res, next) {
         'maxTransactions': ACCOUNT_DATA_MAX_TRANSACTIONS,
         'accountList': accountList
     };
-    rapi.getBalances(account.address).then(info => {
-        pugParam.data.balances = info;
+    rapi.getBalances(account.address).then(balances => {
+        pugParam.data.balances = processAccountBalances(balances);
+        return rapi.getTrustlines(account.address);
+    }).then(trustlines => {
+        pugParam.data.trustlines = processAccountTrustlines(trustlines, account);
         var options = {'limit': ACCOUNT_DATA_MAX_TRANSACTIONS};
         return rapi.getTransactions(account.address, options);
     }).then(transactions => {
-        pugParam.data.transactions = transactions;
+        pugParam.data.transactions = processAccountTransactions(transactions, account);
         return rapi.getOrders(account.address);
-    }).then(info => {
-        pugParam.data.orders = info;
-        return rapi.getTrustlines(account.address);
-    }).then(info => {
-        pugParam.data.trustlines = info;
+    }).then(orders => {
+        pugParam.data.orders = orders;
         res.render('accountData', pugParam);
     }).catch(err => {
         pugParam.error = err;

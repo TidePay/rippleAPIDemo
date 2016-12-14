@@ -20,76 +20,87 @@ html
     h2 Balances
     table(width=1000 border=1)
       tr
-        td Currency
-        td Amount
-        td Counterparty
+        th Currency
+        th Amount
+        th Counterparty
       each balance in data.balances
         tr
           td #{balance.currency}
           td #{balance.value}
           td #{balance.counterparty}
 
-    h2 Transaction History
-    p Last #{maxTransactions} transactions:
+    h2 Trustlines
     table(width=1000 border=1)
       tr
-        td Type
-        td Description
-        td Result
-        td Cost
-        td Timestamp
-        td Sequence number
-        td Ledger Version
-        td Balance Changes
-        td 
-      each transaction in data.transactions
-        tr
-          td
-            span(title=transaction.id) #{transaction.type}
-            case transaction.type
-              when 'payment'
-                if transaction.specification.source.address == accountAddress
-                  td send #{transaction.specification.destination.amount.value} #{transaction.specification.destination.amount.currency} to #{transaction.specification.destination.address}
-                else
-                  td receive #{transaction.specification.destination.amount.value} #{transaction.specification.destination.amount.currency} from #{transaction.specification.source.address}
-              when 'order'
-                td #{transaction.specification.direction} #{transaction.specification.quantity.value} #{transaction.specification.quantity.currency} => #{transaction.specification.totalPrice.value} #{transaction.specification.totalPrice.currency}
-              when 'orderCancellation'
-                td cancel order #{transaction.specification.orderSequence}
-              when 'trustline'
-                td trust #{transaction.specification.counterparty} with limit #{transaction.specification.limit} #{transaction.specification.currency}
-              when 'settings'
-                td 
-                  ul
-                    each value, key in transaction.specification
-                      li #{key}: #{value}
-              default
-                td #{transaction.specification}
-            td #{transaction.outcome.result}
-            td #{transaction.outcome.fee} XRP
-            td #{transaction.outcome.timestamp}
-            td #{transaction.sequence}
-            td #{transaction.outcome.ledgerVersion} (#{transaction.outcome.indexInLedger})
+        th Currency
+        th Direction
+        th Balance/Limit
+        th Specification
+      each trustline in data.trustlines
+        each trustDetail, index in trustline.trustDetails
+          tr
+            if index == 0
+              td(rowspan=trustline.trustDetails.length) #{trustline.currency}
+            td #{trustDetail.direction}
+            td #{trustDetail.balance} / #{trustDetail.limit}
             td 
               ul
-                each changes, addressKey in transaction.outcome.balanceChanges
-                  li #{addressKey}
-                  ul
-                    each change in changes
-                      li #{change.value} #{change.currency}
+                if trustDetail.authorized
+                  li authorized
+                if trustDetail.frozen
+                  li frozen
+                if trustDetail.ripplingDisabled
+                  li rippling disabled
+                if trustDetail.qualityIn
+                  li quality in: #{trustDetail.qualityIn}
+                if trustDetail.qualityOut
+                  li quality out: #{trustDetail.qualityOut}
 
-            td
-              - var url = '../q/transaction/' + transaction.id
-              a(href=url) details
+    h2 Transaction History
+    p Last #{maxTransactions} transactions:
+    table(width=1300 border=1)
+      tr
+        th Type
+        th Description
+        th Result
+        th Cost
+        th Timestamp
+        th Sequence number
+        th Ledger Version
+        th Balance Changes
+        th 
+      each item in data.transactions
+        tr
+          td
+            span(title=item.id) #{item.type}
+          td
+            ul
+              each desc in item.descriptions
+               li #{desc}
+          td #{item.result}
+          td #{item.fee} XRP
+          td #{item.timestamp}
+          td #{item.sequence}
+          td #{item.ledgerVersion} (#{item.indexInLedger})
+          td 
+            ul
+              each accountChanges in item.balanceChanges
+                li #{accountChanges.accountName}
+                ul
+                  each change in accountChanges.changes
+                    li #{change}
+          td
+            - var url = '../q/transaction/' + item.id
+            a(href=url) details
     
     h2 Orders
     table(width=1000 border=1)
       tr
-        td Direction
-        td Quantity
-        td Total Price
-        td Maker Account
-        td Exchange Rate
+        th Direction
+        th Quantity
+        th Total Price
+        th Maker Account
+        th Exchange Rate
       each order in data.orders
         tr
           td #{order.specification.direction}
@@ -97,28 +108,3 @@ html
           td #{order.specification.totalPrice.value} #{order.specification.totalPrice.currency}
           td #{order.properties.maker}
           td #{order.properties.makerExchangeRate}
-
-    h2 Trustlines
-    table(width=1000 border=1)
-      tr
-        td Counterparty
-        td Currency
-        td Balance/Limit
-        td Specification
-      each trustline in data.trustlines
-        tr
-          td #{trustline.specification.counterparty}
-          td #{trustline.specification.currency}
-          td #{trustline.state.balance} / #{trustline.specification.limit}
-          td 
-            ul
-              if trustline.specification.authorized
-                li authorized
-              if trustline.specification.frozen
-                li frozen
-              if trustline.specification.ripplingDisabled
-                li rippling disabled
-              if trustline.specification.qualityIn
-                li quality in: #{trustline.specification.qualityIn}
-              if trustline.specification.qualityOut
-                li quality out: #{trustline.specification.qualityOut}
