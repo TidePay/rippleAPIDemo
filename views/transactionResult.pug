@@ -5,7 +5,12 @@ html
   body
     h1 Transaction Result
     p Transaction ID: #{transactionID}
-    p Result code: #{resultCode}
-    p Result message: #{resultMessage}
+
+    h2 Priliminary Result
+    p Result code: #{preliminaryResultCode}
+    p Result message: #{preliminaryResultMessage}
+
+    h2 Final Result
+    pre #{finalResult}
     br
     a(href='../main') [back to main]

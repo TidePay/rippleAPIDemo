@@ -732,9 +732,19 @@ exports.makePayment = function(req, res, next) {
     }).then(submitted => {
         console.log('Result code: ' + submitted.resultCode);
         console.log('Result message: ' + submitted.resultMessage);
-        result.resultCode = submitted.resultCode;
-        result.resultMessage = submitted.resultMessage;
-        res.render('transactionResult', result);
+        result.preliminaryResultCode = submitted.resultCode;
+        result.preliminaryResultMessage = submitted.resultMessage;
+
+        var queryFinalResultCallback = () => {
+            rapi.getTransaction(result.transactionID).then(info => {
+                result.finalResult = JSON.stringify(info.outcome, null, 2);
+                res.render('transactionResult', result);
+            }).catch(err => {
+                console.error(err);
+                setTimeout(queryFinalResultCallback, 1000);
+            });
+        };
+        setTimeout(queryFinalResultCallback, 1000);
     }).catch(err => {
         next(err);
     });
