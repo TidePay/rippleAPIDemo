@@ -272,56 +272,81 @@ exports.checkRippleConnection = function(req, res, next) {
 // helper function to sign and submit a prepared transaction
 
 const TRANSACTION_QUERY_RESULT_INTERVAL = 1000; // 1 second
+const TRANSACTION_MAX_LEDGER_VERSION_OFFSET = 3;
 
-function signAndSubmitTransaction(preparedTransaction, account) {
-    return new Promise((resolve, reject) => {
-        console.log('prepare:');
-        console.log(preparedTransaction);
-        console.log('sign');
+function queryTransactionFinalResult(transactionID, ledgerVersionOptions) {
+    console.log('Query transaction final result');
 
-        var result = new Object();
+    return rapi.getTransaction(transactionID, ledgerVersionOptions).then(info => {
+        return Promise.resolve(info.outcome);
+    }).catch(err => {
+        // transaction cannot be found, wait and query again
+        if (err instanceof rapi.errors.PendingLedgerVersionError) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    queryTransactionFinalResult(transactionID, ledgerVersionOptions).then(outcome => {
+                        resolve(outcome);
+                    }).catch(err => {
+                        reject(err);
+                    });
+                }, TRANSACTION_QUERY_RESULT_INTERVAL);
+            });
+        } else {
+            return Promise.reject(err);
+        }
+    });
+}
 
-        var signed = rapi.sign(preparedTransaction.txJSON, account.secret);
-        result.transactionID = signed.id;
-        console.log('Transaction ID: ' + signed.id);
-        console.log('submit');
+function signAndSubmitTransaction(preparedTransaction, accountSecret) {
+    console.log('prepare:');
+    console.log(preparedTransaction);
+    console.log('sign');
 
-        // get max ledger version from txJSON
-        const tx = JSON.parse(preparedTransaction.txJSON);
+    var result = new Object();
 
-        rapi.submit(signed.signedTransaction).then(submitted => {
-            console.log('Preliminary result code: ' + submitted.resultCode);
-            console.log('Preliminary result message: ' + submitted.resultMessage);
-            result.preliminaryResultCode = submitted.resultCode;
-            result.preliminaryResultMessage = submitted.resultMessage;
+    var signed = rapi.sign(preparedTransaction.txJSON, accountSecret);
+    result.transactionID = signed.id;
+    console.log('Transaction ID: ' + signed.id);
+    console.log('submit');
 
-            // TODO wait for result depending on the preliminary result code
-            
-            var queryFinalResultCallback = () => {
-                rapi.getLedgerVersion().then(ledgerVersion => {
-                    if (ledgerVersion > tx.LastLedgerSequence) {
-                        reject(new Error('Timeout [' + result.preliminaryResultCode + '(' + result.preliminaryResultMessage + ')]'));
-                    } else {
-                        rapi.getTransaction(result.transactionID).then(info => {
-                            result.finalResult = JSON.stringify(info.outcome, null, 2);
-                            resolve(result);
-                            //successCallback(result);
-                            //res.render('transactionResult', result);
-                        }).catch(err => {
-                            // transaction cannot be found, wait and query again
-                            console.log('Wait for final result [' + err.name + '(' + err.message + ')]');
-                            setTimeout(queryFinalResultCallback, TRANSACTION_QUERY_RESULT_INTERVAL);
-                        });
-                    }
+    return rapi.getLedgerVersion().then(ledgerVersion => {
+        result.ledgerVersionOptions = {
+            'minLedgerVersion': ledgerVersion,
+            'maxLedgerVersion': preparedTransaction.instructions.maxLedgerVersion
+        }
+        return rapi.submit(signed.signedTransaction);
+    }).then(submitted => {
+        console.log('Preliminary result code: ' + submitted.resultCode);
+        console.log('Preliminary result message: ' + submitted.resultMessage);
+        result.preliminaryResultCode = submitted.resultCode;
+        result.preliminaryResultMessage = submitted.resultMessage;
+
+        // if transaction was not successfully submitted, return result immediately
+        const codeCategory = result.preliminaryResultCode.substring(0,3);
+        switch (codeCategory) {
+            case 'tef':
+            case 'tem':
+            case 'tel':
+                result.finalResult = 'Not in ledger.';
+                return Promise.resolve(result);
+            default:
+                break;
+        }
+
+        // wait for the final result
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                queryTransactionFinalResult(result.transactionID, result.ledgerVersionOptions).then(outcome => {
+                    result.finalResult = JSON.stringify(outcome, null, 2);
+                    return resolve(result);
+                    //resolve(outcome);
+                }).catch(err => {
+                    reject(err);
                 });
-            };
-
-            // wait and query the transaction
-            setTimeout(queryFinalResultCallback, TRANSACTION_QUERY_RESULT_INTERVAL);
-        }).catch(err => {
-            //throw err;
-            reject(err);
+            }, TRANSACTION_QUERY_RESULT_INTERVAL);
         });
+    }).catch(err => {
+        return Promise.reject(err);
     });
 };
 
@@ -411,9 +436,12 @@ exports.createAccount = function(req, res) {
             }
         }
     };
+    const instructions = {
+        'maxLedgerVersionOffset': TRANSACTION_MAX_LEDGER_VERSION_OFFSET
+    };
     console.log('preparePayment');
-    rapi.preparePayment(sourceAccount.address, payment).then(prepared => {
-        return signAndSubmitTransaction(prepared, sourceAccount);
+    rapi.preparePayment(sourceAccount.address, payment, instructions).then(prepared => {
+        return signAndSubmitTransaction(prepared, sourceAccount.secret);
     }).then(result => {
         const finalResult = JSON.parse(result.finalResult);
 
@@ -761,9 +789,12 @@ exports.makePayment = function(req, res, next) {
     if (req.body.paths && req.body.paths != '') {
         payment.paths = req.body.paths;
     }
+    const instructions = {
+        'maxLedgerVersionOffset': TRANSACTION_MAX_LEDGER_VERSION_OFFSET
+    };
     console.log('preparePayment');
-    rapi.preparePayment(sourceAccount.address, payment).then(prepared => {
-        return signAndSubmitTransaction(prepared, sourceAccount);
+    rapi.preparePayment(sourceAccount.address, payment, instructions).then(prepared => {
+        return signAndSubmitTransaction(prepared, sourceAccount.secret);
     }).then(result => {
         res.render('transactionResult', result);
     }).catch(err => {
@@ -782,9 +813,12 @@ exports.changeSettings = function(req, res, next) {
     const settings = {
         'defaultRipple': req.body.defaultRipple ? true : false
     };
+    const instructions = {
+        'maxLedgerVersionOffset': TRANSACTION_MAX_LEDGER_VERSION_OFFSET
+    };
     console.log('prepareSettings');
-    rapi.prepareSettings(account.address, settings).then(prepared => {
-        return signAndSubmitTransaction(prepared, account);
+    rapi.prepareSettings(account.address, settings, instructions).then(prepared => {
+        return signAndSubmitTransaction(prepared, account.secret);
     }).then(result => {
         res.render('transactionResult', result);
     }).catch(err => {
@@ -809,9 +843,12 @@ exports.changeTrustline = function(req, res, next) {
         'qualityOut': parseFloat(req.body.qualityOut),
         'ripplingDisabled': req.body.ripplingDisabled ? true : false
     };
+    const instructions = {
+        'maxLedgerVersionOffset': TRANSACTION_MAX_LEDGER_VERSION_OFFSET
+    };
     console.log('prepareSettings');
-    rapi.prepareTrustline(account.address, trustline).then(prepared => {
-        return signAndSubmitTransaction(prepared, account);
+    rapi.prepareTrustline(account.address, trustline, instructions).then(prepared => {
+        return signAndSubmitTransaction(prepared, account.secret);
     }).then(result => {
         res.render('transactionResult', result);
     }).catch(err => {
@@ -831,9 +868,12 @@ exports.changeOrder = function(req, res, next) {
     const settings = {
         'defaultRipple': req.body.defaultRipple ? true : false
     };
+    const instructions = {
+        'maxLedgerVersionOffset': TRANSACTION_MAX_LEDGER_VERSION_OFFSET
+    };
     console.log('prepareSettings');
-    rapi.prepareSettings(address, settings).then(prepared => {
-        return signAndSubmitTransaction(prepared, account);
+    rapi.prepareSettings(address, settings, instructions).then(prepared => {
+        return signAndSubmitTransaction(prepared, account.secret);
     }).then(result => {
         res.render('transactionResult', result);
     }).catch(err => {
