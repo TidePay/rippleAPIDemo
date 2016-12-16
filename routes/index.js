@@ -269,6 +269,62 @@ exports.checkRippleConnection = function(req, res, next) {
     }
 };
 
+// helper function to sign and submit a prepared transaction
+
+const TRANSACTION_QUERY_RESULT_INTERVAL = 1000; // 1 second
+
+function signAndSubmitTransaction(preparedTransaction, account) {
+    return new Promise((resolve, reject) => {
+        console.log('prepare:');
+        console.log(preparedTransaction);
+        console.log('sign');
+
+        var result = new Object();
+
+        var signed = rapi.sign(preparedTransaction.txJSON, account.secret);
+        result.transactionID = signed.id;
+        console.log('Transaction ID: ' + signed.id);
+        console.log('submit');
+
+        // get max ledger version from txJSON
+        const tx = JSON.parse(preparedTransaction.txJSON);
+
+        rapi.submit(signed.signedTransaction).then(submitted => {
+            console.log('Preliminary result code: ' + submitted.resultCode);
+            console.log('Preliminary result message: ' + submitted.resultMessage);
+            result.preliminaryResultCode = submitted.resultCode;
+            result.preliminaryResultMessage = submitted.resultMessage;
+
+            // TODO wait for result depending on the preliminary result code
+            
+            var queryFinalResultCallback = () => {
+                rapi.getLedgerVersion().then(ledgerVersion => {
+                    if (ledgerVersion > tx.LastLedgerSequence) {
+                        reject(new Error('Timeout [' + result.preliminaryResultCode + '(' + result.preliminaryResultMessage + ')]'));
+                    } else {
+                        rapi.getTransaction(result.transactionID).then(info => {
+                            result.finalResult = JSON.stringify(info.outcome, null, 2);
+                            resolve(result);
+                            //successCallback(result);
+                            //res.render('transactionResult', result);
+                        }).catch(err => {
+                            // transaction cannot be found, wait and query again
+                            console.log('Wait for final result [' + err.name + '(' + err.message + ')]');
+                            setTimeout(queryFinalResultCallback, TRANSACTION_QUERY_RESULT_INTERVAL);
+                        });
+                    }
+                });
+            };
+
+            // wait and query the transaction
+            setTimeout(queryFinalResultCallback, TRANSACTION_QUERY_RESULT_INTERVAL);
+        }).catch(err => {
+            //throw err;
+            reject(err);
+        });
+    });
+};
+
 // operation: manager accounts
 
 exports.showAccountList = function(req, res) {
@@ -355,27 +411,15 @@ exports.createAccount = function(req, res) {
             }
         }
     };
-    var result = new Object();
     console.log('preparePayment');
     rapi.preparePayment(sourceAccount.address, payment).then(prepared => {
-        console.log('prepare:');
-        console.log(prepared);
-        console.log('sign');
-        return rapi.sign(prepared.txJSON, sourceAccount.secret);
-    }).then(signed => {
-        result.transactionID = signed.id;
-        console.log('Transaction ID: ' + signed.id);
-        console.log('submit');
-        return rapi.submit(signed.signedTransaction);
-    }).then(submitted => {
-        console.log('Result code: ' + submitted.resultCode);
-        console.log('Result message: ' + submitted.resultMessage);
-        result.resultCode = submitted.resultCode;
-        result.resultMessage = submitted.resultMessage;
+        return signAndSubmitTransaction(prepared, sourceAccount);
+    }).then(result => {
+        const finalResult = JSON.parse(result.finalResult);
 
         var error;
-        if (result.resultCode != 'tesSUCCESS') {
-            error = 'Account is not created (' + result.resultCode + ': ' + result.resultMessage + ').';
+        if (finalResult.result != 'tesSUCCESS') {
+            error = 'Account is not created (' + finalResult.result + ').';
         } else {
             error = addAccountToList(newAccount);
         }
@@ -685,8 +729,8 @@ exports.showMakePayment = function(req, res) {
 };
 
 exports.makePayment = function(req, res, next) {
-    const source = accountList[req.body.sourceAccount];
-    const destination = accountList[req.body.destinationAccount];
+    const sourceAccount = accountList[req.body.sourceAccount];
+    const destinationAccount = accountList[req.body.destinationAccount];
     var sourceMaxAmount = {
         'currency': req.body.sourceCurrency,
         'value': req.body.sourceMaxAmount
@@ -706,45 +750,22 @@ exports.makePayment = function(req, res, next) {
 
     var payment = {
         'source': {
-            'address': source.address,
+            'address': sourceAccount.address,
             'maxAmount': sourceMaxAmount
         },
         'destination': {
-            'address': destination.address,
+            'address': destinationAccount.address,
             'amount': destinationAmount
         }
     };
     if (req.body.paths && req.body.paths != '') {
         payment.paths = req.body.paths;
     }
-    var result = new Object();
     console.log('preparePayment');
-    rapi.preparePayment(source.address, payment).then(prepared => {
-        console.log('prepare:');
-        console.log(prepared);
-        console.log('sign');
-        return rapi.sign(prepared.txJSON, source.secret);
-    }).then(signed => {
-        result.transactionID = signed.id;
-        console.log('Transaction ID: ' + signed.id);
-        console.log('submit');
-        return rapi.submit(signed.signedTransaction);
-    }).then(submitted => {
-        console.log('Result code: ' + submitted.resultCode);
-        console.log('Result message: ' + submitted.resultMessage);
-        result.preliminaryResultCode = submitted.resultCode;
-        result.preliminaryResultMessage = submitted.resultMessage;
-
-        var queryFinalResultCallback = () => {
-            rapi.getTransaction(result.transactionID).then(info => {
-                result.finalResult = JSON.stringify(info.outcome, null, 2);
-                res.render('transactionResult', result);
-            }).catch(err => {
-                console.error(err);
-                setTimeout(queryFinalResultCallback, 1000);
-            });
-        };
-        setTimeout(queryFinalResultCallback, 1000);
+    rapi.preparePayment(sourceAccount.address, payment).then(prepared => {
+        return signAndSubmitTransaction(prepared, sourceAccount);
+    }).then(result => {
+        res.render('transactionResult', result);
     }).catch(err => {
         next(err);
     });
@@ -761,23 +782,10 @@ exports.changeSettings = function(req, res, next) {
     const settings = {
         'defaultRipple': req.body.defaultRipple ? true : false
     };
-    var result = new Object();
     console.log('prepareSettings');
     rapi.prepareSettings(account.address, settings).then(prepared => {
-        console.log('prepare:');
-        console.log(prepared);
-        console.log('sign');
-        return rapi.sign(prepared.txJSON, account.secret);
-    }).then(signed => {
-        result.transactionID = signed.id;
-        console.log('Transaction ID: ' + signed.id);
-        console.log('submit');
-        return rapi.submit(signed.signedTransaction);
-    }).then(submitted => {
-        console.log('Result code: ' + submitted.resultCode);
-        console.log('Result message: ' + submitted.resultMessage);
-        result.resultCode = submitted.resultCode;
-        result.resultMessage = submitted.resultMessage;
+        return signAndSubmitTransaction(prepared, account);
+    }).then(result => {
         res.render('transactionResult', result);
     }).catch(err => {
         next(err);
@@ -801,23 +809,10 @@ exports.changeTrustline = function(req, res, next) {
         'qualityOut': parseFloat(req.body.qualityOut),
         'ripplingDisabled': req.body.ripplingDisabled ? true : false
     };
-    var result = new Object();
     console.log('prepareSettings');
     rapi.prepareTrustline(account.address, trustline).then(prepared => {
-        console.log('prepare:');
-        console.log(prepared);
-        console.log('sign');
-        return rapi.sign(prepared.txJSON, account.secret);
-    }).then(signed => {
-        result.transactionID = signed.id;
-        console.log('Transaction ID: ' + signed.id);
-        console.log('submit');
-        return rapi.submit(signed.signedTransaction);
-    }).then(submitted => {
-        console.log('Result code: ' + submitted.resultCode);
-        console.log('Result message: ' + submitted.resultMessage);
-        result.resultCode = submitted.resultCode;
-        result.resultMessage = submitted.resultMessage;
+        return signAndSubmitTransaction(prepared, account);
+    }).then(result => {
         res.render('transactionResult', result);
     }).catch(err => {
         next(err);
@@ -836,23 +831,10 @@ exports.changeOrder = function(req, res, next) {
     const settings = {
         'defaultRipple': req.body.defaultRipple ? true : false
     };
-    var result = new Object();
     console.log('prepareSettings');
     rapi.prepareSettings(address, settings).then(prepared => {
-        console.log('prepare:');
-        console.log(prepared);
-        console.log('sign');
-        return rapi.sign(prepared.txJSON, secret);
-    }).then(signed => {
-        result.transactionID = signed.id;
-        console.log('Transaction ID: ' + signed.id);
-        console.log('submit');
-        return rapi.submit(signed.signedTransaction);
-    }).then(submitted => {
-        console.log('Result code: ' + submitted.resultCode);
-        console.log('Result message: ' + submitted.resultMessage);
-        result.resultCode = submitted.resultCode;
-        result.resultMessage = submitted.resultMessage;
+        return signAndSubmitTransaction(prepared, account);
+    }).then(result => {
         res.render('transactionResult', result);
     }).catch(err => {
         next(err);
