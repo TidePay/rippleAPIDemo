@@ -35,6 +35,7 @@ var operationList = [
     {name: 'Get Order Book', path: '/getOrderbook'},
     {name: 'Get Paths', path: '/getPaths'},
     {name: 'Make Payment', path: '/transaction/payment'},
+    {name: 'Place Order', path: '/transaction/order'},
     {name: 'Change Settings', path: '/transaction/settings'},
     {name: 'Change Trustline', path: '/transaction/trustline'}
 ];
@@ -548,6 +549,14 @@ function processAccountTrustlines(trustlines, account) {
     return processed;
 }
 
+function stringifyAmount(amount) {
+    if (amount.currency != 'XRP' && amount.hasOwnProperty('counterparty')) {
+        return amount.value + ' ' + amount.currency + '.' + getAccountNameByAddress(amount.counterparty);
+    } else {
+        return amount.value + ' ' + amount.currency;
+    }
+}
+
 function processAccountTransactions(transactions, account) {
     var processed = [];
     for (var i = 0; i < transactions.length; i++) {
@@ -572,16 +581,16 @@ function processAccountTransactions(transactions, account) {
                 p.descriptions.push('Sender: ' + sender);
                 p.descriptions.push('Recipient: ' + recipient);
                 if (t.specification.source.maxAmount) {
-                    p.descriptions.push('Src amount (max): ' + s.source.maxAmount.value + ' ' + s.source.maxAmount.currency);
-                    p.descriptions.push('Dst amount: ' + s.destination.amount.value + ' ' + s.destination.amount.currency);
+                    p.descriptions.push('Src amount (max): ' + stringifyAmount(s.source.maxAmount));
+                    p.descriptions.push('Dst amount: ' + stringifyAmount(s.destination.amount));
                 } else {
-                    p.descriptions.push('Src amount: ' + s.source.amount.value + ' ' + s.source.amount.currency);
-                    p.descriptions.push('Dst amount (min): ' + s.destination.minAmount.value + ' ' + s.destination.minAmount.currency);
+                    p.descriptions.push('Src amount: ' + stringifyAmount(s.source.amount));
+                    p.descriptions.push('Dst amount (min): ' + stringifyAmount(s.destination.minAmount));
                 }
                 break;
             case 'order':
-                p.descriptions.push(s.direction + ' ' + s.quantity.value + ' ' + s.quantity.currency);
-                p.descriptions.push('@ ' + s.totalPrice.value + ' ' + s.totalPrice.currency);
+                p.descriptions.push(s.direction + ' ' + stringifyAmount(s.quantity));
+                p.descriptions.push('@ ' + stringifyAmount(s.totalPrice));
                 break;
             case 'orderCancellation':
                 p.descriptions.push('Cancel order: ' + s.orderSequence);
@@ -612,17 +621,24 @@ function processAccountTransactions(transactions, account) {
             accountChanges.changes = [];
 
             for (var j = 0; j < changes.length; j++) {
-                const change = changes[j];
-                if (change.currency == 'XRP') {
-                    accountChanges.changes.push(change.value + ' XRP');
-                } else {
-                    const counterparty = getAccountNameByAddress(change.counterparty);
-                    accountChanges.changes.push(change.value + ' ' + change.currency + '.' + counterparty);
-                }
+                accountChanges.changes.push(stringifyAmount(changes[j]));
             }
             p.balanceChanges.push(accountChanges);
         }
 
+        processed.push(p);
+    }
+    return processed;
+}
+
+function processAccountOrders(orders, account) {
+    var processed = [];
+    for (var i = 0; i < orders.length; i++) {
+        var p = JSON.parse(JSON.stringify(orders[i]));
+        p.specification.quantity = stringifyAmount(p.specification.quantity);
+        p.specification.totalPrice = stringifyAmount(p.specification.totalPrice);
+        p.properties.maker = getAccountNameByAddress(p.properties.maker);
+        
         processed.push(p);
     }
     return processed;
@@ -646,7 +662,7 @@ exports.queryAccount = function(req, res, next) {
         pugParam.data.transactions = processAccountTransactions(transactions, account);
         return rapi.getOrders(account.address);
     }).then(orders => {
-        pugParam.data.orders = orders;
+        pugParam.data.orders = processAccountOrders(orders, account);
         res.render('accountData', pugParam);
     }).catch(err => {
         pugParam.error = err;
@@ -667,9 +683,8 @@ exports.getPaths = function(req, res, next) {
         'currency': req.body.destinationCurrency,
         'value': req.body.destinationAmount
     }
-    if (destinationAmount.currency != 'XRP' && req.body.destinationCounterparty) {
-        const destinationCounterparty = accountList[req.body.destinationCounterparty];
-        destinationAmount.counterparty = destinationCounterparty.address;
+    if (destinationAmount.currency != 'XRP') {
+        destinationAmount.counterparty = accountList[req.body.destinationCounterparty].address;
     }
 
     const pathfind = {
@@ -691,12 +706,8 @@ exports.getPaths = function(req, res, next) {
             pair.source.account = getAccountNameByAddress(pair.source.address);
             pair.destination.account = getAccountNameByAddress(pair.destination.address);
 
-            if (pair.source.maxAmount.hasOwnProperty('counterparty')) {
-                pair.source.maxAmount.counterparty = getAccountNameByAddress(pair.source.maxAmount.counterparty);
-            }
-            if (pair.destination.amount.hasOwnProperty('counterparty')) {
-                pair.destination.amount.counterparty = getAccountNameByAddress(pair.destination.amount.counterparty);
-            }
+            pair.source.maxAmount = stringifyAmount(pair.source.maxAmount);
+            pair.destination.amount = stringifyAmount(pair.destination.amount);
 
             pair.pathsObject = JSON.parse(pair.paths);
             for (var j = 0; j < pair.pathsObject.length; j++) {
@@ -737,10 +748,10 @@ exports.getOrderbook = function(req, res) {
         }
     };
     if (orderbookRequest.base.currency != 'XRP') {
-        orderbookRequest.base.counterparty = req.body.baseCounterparty;
+        orderbookRequest.base.counterparty = accountList[req.body.baseCounterpartyIndex].address;
     }
     if (orderbookRequest.counter.currency != 'XRP') {
-        orderbookRequest.counter.counterparty = req.body.counterCounterparty;
+        orderbookRequest.counter.counterparty = accountList[req.body.counterCounterpartyIndex].address;
     }
     rapi.getOrderbook(account.address, orderbookRequest).then(orderbook => {
         var result = {
@@ -767,13 +778,11 @@ exports.makePayment = function(req, res, next) {
         'currency': req.body.destinationCurrency,
         'value': req.body.destinationAmount
     }
-    if (sourceMaxAmount.currency != 'XRP' && req.body.sourceCounterparty) {
-        const sourceCounterparty = accountList[req.body.sourceCounterparty];
-        sourceMaxAmount.counterparty = sourceCounterparty.address;
+    if (sourceMaxAmount.currency != 'XRP') {
+        sourceMaxAmount.counterparty = accountList[req.body.sourceCounterparty].address;
     }
-    if (destinationAmount.currency != 'XRP' && req.body.destinationCounterparty) {
-        const destinationCounterparty = accountList[req.body.destinationCounterparty];
-        destinationAmount.counterparty = destinationCounterparty.address;
+    if (destinationAmount.currency != 'XRP') {
+        destinationAmount.counterparty = accountList[req.body.destinationCounterparty].address;
     }
 
     var payment = {
@@ -858,21 +867,38 @@ exports.changeTrustline = function(req, res, next) {
 
 // transaction operation: order
 
-exports.showChangeOrder = function(req, res) {
-    res.render('changeSettings');
+exports.showPlaceOrder = function(req, res) {
+    res.render('placeOrder', {'accountList': accountList});
 };
 
-exports.changeOrder = function(req, res, next) {
-    const address = req.body.address;
-    const secret = req.body.secret;
-    const settings = {
-        'defaultRipple': req.body.defaultRipple ? true : false
+exports.placeOrder = function(req, res, next) {
+    const account = accountList[req.body.accountIndex];
+    var quantity = {
+        'currency': req.body.quantityCurrency,
+        'value': req.body.quantityAmount
+    };
+    var totalPrice = {
+        'currency': req.body.priceCurrency,
+        'value': req.body.priceAmount
+    }
+    if (quantity.currency != 'XRP') {
+        const quantityCounterparty = accountList[req.body.quantityCounterpartyIndex];
+        quantity.counterparty = quantityCounterparty.address;
+    }
+    if (totalPrice.currency != 'XRP') {
+        const totalPriceCounterparty = accountList[req.body.priceCounterpartyIndex];
+        totalPrice.counterparty = totalPriceCounterparty.address;
+    }
+    const order = {
+        'direction': req.body.direction,
+        'quantity': quantity,
+        'totalPrice': totalPrice
     };
     const instructions = {
         'maxLedgerVersionOffset': TRANSACTION_MAX_LEDGER_VERSION_OFFSET
     };
-    console.log('prepareSettings');
-    rapi.prepareSettings(address, settings, instructions).then(prepared => {
+    console.log('prepareOrder');
+    rapi.prepareOrder(account.address, order, instructions).then(prepared => {
         return signAndSubmitTransaction(prepared, account.secret);
     }).then(result => {
         res.render('transactionResult', result);

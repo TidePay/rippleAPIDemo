@@ -15,12 +15,16 @@ html
         label(for='baseCurrency') Base currency:
         input#baseCurrency(type='text' name='baseCurrency')
       div
-        label(for='baseCounterparty') Base issuer:
-        input#baseCounterparty(type='text' name='baseCounterparty')
+        label(for='baseCounterpartyMenu') Base issuer:
+        select#baseCounterpartyMenu(name='baseCounterpartyIndex')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
       div
         label(for='counterCurrency') Counter currency:
         input#counterCurrency(type='text' name='counterCurrency')
       div
-        label(for='counterCounterparty') Counter issuer:
-        input#counterCounterparty(type='text' name='counterCounterparty')
+        label(for='counterCounterpartyMenu') Counter issuer:
+        select#counterCounterpartyMenu(name='counterCounterpartyIndex')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
       button(type='submit') Submit

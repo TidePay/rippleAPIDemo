@@ -104,7 +104,7 @@ html
       each order in data.orders
         tr
           td #{order.specification.direction}
-          td #{order.specification.quantity.value} #{order.specification.quantity.currency}
-          td #{order.specification.totalPrice.value} #{order.specification.totalPrice.currency}
+          td #{order.specification.quantity}
+          td #{order.specification.totalPrice}
           td #{order.properties.maker}
           td #{order.properties.makerExchangeRate}

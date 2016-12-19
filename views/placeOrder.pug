@@ -1,0 +1,46 @@
+doctype html
+html
+  head
+    title="Place Order"
+  body
+    a(href='../main') [back to main]
+    h1 Place Order
+    form(method='POST' action='')
+      div
+        label(for='account') Account:
+        select(name='accountIndex')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
+      div
+        label(for='direction') Direction:
+        select(name='direction')
+          option(value='buy') Buy
+          option(value='sell') Sell
+
+      h2 Quantity
+      div
+        label(for='quantityCurrency') Currency:
+        input#quantityCurrency(type='text' name='quantityCurrency')
+      div
+        label(for='quantityAmount') Amount:
+        input#quantityAmount(type='text' name='quantityAmount')
+      div
+        label(for='quantityCounterparty') Account:
+        select(name='quantityCounterpartyIndex')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
+
+      h2 Price
+      div
+        label(for='priceCurrency') Currency:
+        input#priceCurrency(type='text' name='priceCurrency')
+      div
+        label(for='priceAmount') Amount:
+        input#priceAmount(type='text' name='priceAmount')
+      div
+        label(for='priceCounterparty') Account:
+        select(name='priceCounterpartyIndex')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
+
+      button(type='submit') Submit

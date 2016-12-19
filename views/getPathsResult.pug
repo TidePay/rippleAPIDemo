@@ -18,14 +18,11 @@ html
               td(rowspan=pair.pathsObject.length)
                 | #{pair.source.account}
                 br
-                | #{pair.source.maxAmount.value} #{pair.source.maxAmount.currency}
+                | #{pair.source.maxAmount}
               td(rowspan=pair.pathsObject.length)
                 | #{pair.destination.account}
                 br
-                if pair.destination.amount.counterparty
-                  | #{pair.destination.amount.value} #{pair.destination.amount.currency}.#{pair.destination.amount.counterparty}
-                else
-                  | #{pair.destination.amount.value} #{pair.destination.amount.currency}
+                | #{pair.destination.amount}
             td
               ul
                 each step in pathObject

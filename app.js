@@ -46,6 +46,8 @@ app.get('/transaction/settings', routes.showChangeSettings);
 app.post('/transaction/settings', routes.changeSettings);
 app.get('/transaction/trustline', routes.showChangeTrustline);
 app.post('/transaction/trustline', routes.changeTrustline);
+app.get('/transaction/order', routes.showPlaceOrder);
+app.post('/transaction/order', routes.placeOrder);
 
 app.use(routes.handleError);
 
