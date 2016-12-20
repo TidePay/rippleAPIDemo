@@ -48,6 +48,8 @@ app.get('/transaction/trustline', routes.showChangeTrustline);
 app.post('/transaction/trustline', routes.changeTrustline);
 app.get('/transaction/order', routes.showPlaceOrder);
 app.post('/transaction/order', routes.placeOrder);
+app.get('/transaction/orderCancel', routes.showCancelOrder);
+app.post('/transaction/orderCancel', routes.cancelOrder);
 
 app.use(routes.handleError);
 

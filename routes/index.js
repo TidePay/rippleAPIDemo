@@ -36,6 +36,7 @@ var operationList = [
     {name: 'Get Paths', path: '/getPaths'},
     {name: 'Make Payment', path: '/transaction/payment'},
     {name: 'Place Order', path: '/transaction/order'},
+    {name: 'Cancel Order', path: '/transaction/orderCancel'},
     {name: 'Change Settings', path: '/transaction/settings'},
     {name: 'Change Trustline', path: '/transaction/trustline'}
 ];
@@ -55,6 +56,42 @@ var Account = function(name, address, secret) {
     this.address = address;
     this.secret = secret;
 };
+
+var OrderbookResult = function(orderbook, error) {
+    this.bids = [];
+    this.asks = [];
+
+    if (orderbook !== null) {
+        this.rawJSON = JSON.stringify(orderbook, null, 2);
+
+        // bids
+        var i;
+        for (i = 0; i < orderbook.bids.length; i++) {
+            var p = new Object();
+            const b = orderbook.bids[i];
+            p.quantity = stringifyAmount(b.specification.quantity);
+            p.totalPrice = stringifyAmount(b.specification.totalPrice);
+            p.maker = getAccountNameByAddress(b.properties.maker);
+            p.sequence = b.properties.sequence;
+            p.makerExchangeRate = b.properties.makerExchangeRate;
+            this.bids.push(p);
+        }
+
+        // asks
+        for (i = 0; i < orderbook.asks.length; i++) {
+            var p = new Object();
+            const a = orderbook.asks[i];
+            p.quantity = stringifyAmount(a.specification.quantity);
+            p.totalPrice = stringifyAmount(a.specification.totalPrice);
+            p.maker = getAccountNameByAddress(a.properties.maker);
+            p.sequence = a.properties.sequence;
+            p.makerExchangeRate = a.properties.makerExchangeRate;
+            this.asks.push(p);
+        }
+    } else {
+        this.errorMessage = '[' + error.name + '(' + error.message + ')]';
+    }
+}
 
 var accountList = [];
 var accountAddressNameMap = new Object();
@@ -339,10 +376,10 @@ function signAndSubmitTransaction(preparedTransaction, accountSecret) {
             setTimeout(() => {
                 queryTransactionFinalResult(result.transactionID, result.ledgerVersionOptions).then(outcome => {
                     result.finalResult = JSON.stringify(outcome, null, 2);
-                    return resolve(result);
-                    //resolve(outcome);
+                    resolve(result);
                 }).catch(err => {
-                    reject(err);
+                    result.finalResult = '[' + err.name + '(' + err.message + ')]';
+                    resolve(result);
                 });
             }, TRANSACTION_QUERY_RESULT_INTERVAL);
         });
@@ -754,10 +791,11 @@ exports.getOrderbook = function(req, res) {
         orderbookRequest.counter.counterparty = accountList[req.body.counterCounterpartyIndex].address;
     }
     rapi.getOrderbook(account.address, orderbookRequest).then(orderbook => {
-        var result = {
-            'rawJSON': JSON.stringify(orderbook, null, 2)
-        };
-        res.render('getOrderbookResult', {'accountList': accountList, 'result': result});
+        const result = new OrderbookResult(orderbook);
+        res.render('getOrderbookResult', {'result': result});
+    }).catch(err => {
+        const result = new OrderbookResult(null, err);
+        res.render('getOrderbookResult', {'result': result});
     });
 };
 
@@ -865,7 +903,7 @@ exports.changeTrustline = function(req, res, next) {
     });
 };
 
-// transaction operation: order
+// transaction operation: place order
 
 exports.showPlaceOrder = function(req, res) {
     res.render('placeOrder', {'accountList': accountList});
@@ -889,16 +927,54 @@ exports.placeOrder = function(req, res, next) {
         const totalPriceCounterparty = accountList[req.body.priceCounterpartyIndex];
         totalPrice.counterparty = totalPriceCounterparty.address;
     }
-    const order = {
+    var order = {
         'direction': req.body.direction,
         'quantity': quantity,
         'totalPrice': totalPrice
     };
+    switch (req.body.orderOption) {
+        case 'FOK':
+            order.fillOrKill = true;
+            break;
+        case 'IOC':
+            order.immediateOrCancel = true;
+            break;
+        case 'none':
+        default:
+            break;
+    }
+    if (req.body.passive) {
+        order.passive = true;
+    }
     const instructions = {
         'maxLedgerVersionOffset': TRANSACTION_MAX_LEDGER_VERSION_OFFSET
     };
     console.log('prepareOrder');
     rapi.prepareOrder(account.address, order, instructions).then(prepared => {
+        return signAndSubmitTransaction(prepared, account.secret);
+    }).then(result => {
+        res.render('transactionResult', result);
+    }).catch(err => {
+        next(err);
+    });
+};
+
+// transaction operation: cancel order
+
+exports.showCancelOrder = function(req, res) {
+    res.render('cancelOrder', {'accountList': accountList});
+};
+
+exports.cancelOrder = function(req, res, next) {
+    const account = accountList[req.body.accountIndex];
+    var orderCancellation = {
+        'orderSequence': parseInt(req.body.orderSequence)
+    };
+    const instructions = {
+        'maxLedgerVersionOffset': TRANSACTION_MAX_LEDGER_VERSION_OFFSET
+    };
+    console.log('prepareOrderCancellation');
+    rapi.prepareOrderCancellation(account.address, orderCancellation, instructions).then(prepared => {
         return signAndSubmitTransaction(prepared, account.secret);
     }).then(result => {
         res.render('transactionResult', result);

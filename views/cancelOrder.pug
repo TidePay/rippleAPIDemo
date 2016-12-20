@@ -1,0 +1,18 @@
+doctype html
+html
+  head
+    title="Cancel Order"
+  body
+    a(href='../main') [back to main]
+    h1 Cancel Order
+    form(method='POST' action='')
+      div
+        label(for='account') Account:
+        select(name='accountIndex')
+          each account, i in accountList
+            option(value=i) #{account.name} (#{account.address})
+      div
+        label(for='orderSequence') Order sequence:
+        input#orderSequence(type='text' name='orderSequence')
+        
+      button(type='submit') Submit

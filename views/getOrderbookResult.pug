@@ -4,6 +4,41 @@ html
     title="Get Order Book Result"
   body
     h1 Get Order Book Result
+    
+    if result.errorMessage
+      p(style='color:red') #{result.errorMessage}
+
+    h2 Bids (Buy)
+    table(width=500 border=1)
+      tr
+        th Maker
+        th Sequence
+        th Quantity
+        th Total Price
+        th Exchange Rate
+      each bid in result.bids
+        tr
+          td #{bid.maker}
+          td #{bid.sequence}
+          td #{bid.quantity}
+          td #{bid.totalPrice}
+          td #{bid.makerExchangeRate}
+
+    h2 Asks (Sell)
+    table(width=500 border=1)
+      tr
+        th Maker
+        th Sequence
+        th Quantity
+        th Total Price
+        th Exchange Rate
+      each ask in result.asks
+        tr
+          td #{ask.maker}
+          td #{ask.sequence}
+          td #{ask.quantity}
+          td #{ask.totalPrice}
+          td #{ask.makerExchangeRate}
 
     p Raw JSON result:
     pre #{result.rawJSON}

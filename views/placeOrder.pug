@@ -43,4 +43,15 @@ html
           each account, i in accountList
             option(value=i) #{account.name} (#{account.address})
 
+      h2 Options
+      div
+        label(for='orderOption') Order:
+        select(name='orderOption')
+          option(value='none') None
+          option(value='FOK') Fill or Kill
+          option(value='IOC') Immediate or Cancel
+      div
+        label(for='passive') Passive:
+        input#passive(type='checkbox' name='passive')
+        
       button(type='submit') Submit
