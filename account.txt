@@ -77,4 +77,29 @@
   "name": "A4",
   "address": "rs3XTMrumqjmBU91hv3MwjSEvuc1nkTJTF",
   "secret": "shJeSTCjuZ5QodjkWE2RTcq7tnwVQ"
+},
+{
+  "name": "Gorillaz",
+  "address": "rJBd2mDhssGKnHmc8AkaLd2pXUvNfmyigo",
+  "secret": "snNzLEEUPwyvVWqqcTYn8MaBzpE5a"
+},
+{
+  "name": "Handy",
+  "address": "rLzA3MCd8nxjX94dUmeVQ7A24AR6kNcdsC",
+  "secret": "snNXL9AfwbPcgfP76RvxCuHGqYxb3"
+},
+{
+  "name": "Ivy",
+  "address": "rE7NgAobvDfa7xr5uDzSn5EBxQxQojThwq",
+  "secret": "shiFMuexXpTTr8ehQMNSXUpTNZUFv"
+},
+{
+  "name": "Jennifer",
+  "address": "rMK9PsZoFMt9hJHvvg511P7He4PFPx82TP",
+  "secret": "ssBhXSGfKh9amSz8uxKvkKiU4UKsw"
+},
+{
+  "name": "Katherine",
+  "address": "rsvirvo5VmrxdCT3jMRLrRsXtcwg9KxsXR",
+  "secret": "shktLL9g4ih8fzTbeBpjXzrsCRArQ"
 }
