@@ -1,4 +1,5 @@
 const tx = require('./transaction.js');
+const utils = require('./utils.js')
 
 // transaction operation: place order
 
@@ -57,13 +58,39 @@ function placeOrder(req, res, next) {
 // transaction operation: cancel order
 
 function showCancelOrder(req, res) {
-    res.render('cancelOrder', {'accountList': this.accountList});
+    const pugParam = {
+        'accountList': this.accountList,
+        'orders': []
+    }
+    res.render('cancelOrder', pugParam);
+};
+
+function getOrders(req, res, next) {
+    const account = this.accountList[req.body.accountIndex];
+
+    this.api.getOrders(account.address).then(orders => {
+        for (var i = 0; i < orders.length; i++) {
+            var order = orders[i];
+            order.specification.quantity = utils.stringifyAmount(this.accountMap, order.specification.quantity);
+            order.specification.totalPrice = utils.stringifyAmount(this.accountMap, order.specification.totalPrice);
+        }
+        const pugParam = {
+            'accountList': this.accountList,
+            'orders': orders,
+            'accountIndex': req.body.accountIndex,
+            'accountName': account.name,
+            'accountAddress': account.address
+        };
+        res.render('cancelOrder', pugParam);
+    }).catch(err => {
+        next(err);
+    });
 };
 
 function cancelOrder(req, res, next) {
-    const account = this.accountList[req.body.accountIndex];
+    const account = this.accountList[req.body.txAccountIndex];
     var orderCancellation = {
-        'orderSequence': parseInt(req.body.orderSequence)
+        'orderSequence': parseInt(req.body.cancelOrderSequence)
     };
 
     console.log('prepareOrderCancellation');
@@ -76,7 +103,15 @@ function cancelOrder(req, res, next) {
     });
 };
 
+function handleCancelOrderAction(req, res, next) {
+    if ('getOrders' in req.body) {
+        getOrders.call(this, req, res, next);
+    } else if ('cancelOrderSequence' in req.body) {
+        cancelOrder.call(this, req, res, next);
+    }
+};
+
 exports.showPlaceOrder = showPlaceOrder;
 exports.placeOrder = placeOrder;
 exports.showCancelOrder = showCancelOrder;
-exports.cancelOrder = cancelOrder;
+exports.handleCancelOrderAction = handleCancelOrderAction;

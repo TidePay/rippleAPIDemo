@@ -41,7 +41,7 @@ exports.changeTrustline = (req, res, next) => demo.changeTrustline(req, res, nex
 exports.showPlaceOrder = (req, res) => demo.showPlaceOrder(req, res);
 exports.placeOrder = (req, res, next) => demo.placeOrder(req, res, next);
 exports.showCancelOrder = (req, res) => demo.showCancelOrder(req, res);
-exports.cancelOrder = (req, res, next) => demo.cancelOrder(req, res, next);
+exports.handleCancelOrderAction = (req, res, next) => demo.handleCancelOrderAction(req, res, next);
 
 exports.query = (req, res) => demo.query(req, res);
 exports.submitQuery = (req, res) => demo.submitQuery(req, res);

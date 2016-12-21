@@ -123,7 +123,7 @@ RippleAPIDemo.prototype.changeTrustline = trustline.changeTrustline;
 RippleAPIDemo.prototype.showPlaceOrder = order.showPlaceOrder;
 RippleAPIDemo.prototype.placeOrder = order.placeOrder;
 RippleAPIDemo.prototype.showCancelOrder = order.showCancelOrder;
-RippleAPIDemo.prototype.cancelOrder = order.cancelOrder;
+RippleAPIDemo.prototype.handleCancelOrderAction = order.handleCancelOrderAction;
 
 RippleAPIDemo.prototype.query = apiquery.query;
 RippleAPIDemo.prototype.submitQuery = apiquery.submitQuery;

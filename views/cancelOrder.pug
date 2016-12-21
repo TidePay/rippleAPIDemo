@@ -4,15 +4,33 @@ html
     title="Cancel Order"
   body
     a(href='../main') [back to main]
-    h1 Cancel Order
+
     form(method='POST' action='')
+      h1 Cancel Order
       div
         label(for='account') Account:
         select(name='accountIndex')
           each account, i in accountList
             option(value=i) #{account.name} (#{account.address})
-      div
-        label(for='orderSequence') Order sequence:
-        input#orderSequence(type='text' name='orderSequence')
-        
-      button(type='submit') Submit
+      button(type='submit' name='getOrders') Get orders
+
+      if typeof(accountIndex) !== 'undefined'
+        h2 #{accountName} (#{accountAddress})
+        input(type='hidden' name='txAccountIndex' value=accountIndex)
+        table(width=700 border=1)
+          tr
+            th Direction
+            th Quantity
+            th Total Price
+            th Exchange Rate
+            th Sequence
+            th Cancel
+          each order in orders
+            tr
+              td #{order.specification.direction}
+              td #{order.specification.quantity}
+              td #{order.specification.totalPrice}
+              td #{order.properties.makerExchangeRate}
+              td #{order.properties.sequence}
+              td
+                button(type='submit' name='cancelOrderSequence' value=order.properties.sequence) Cancel order
