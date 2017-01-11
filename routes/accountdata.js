@@ -41,10 +41,6 @@ function processAccountTrustlines(accountMap, trustlines, account) {
         var p = new Object();
         const t = trustlines[i];
 
-        if (t.specification.limit == 0 && t.counterparty.limit == 0 && t.state.balance == 0) {
-            continue;   // no trust lines between two parties
-        }
-
         const counterparty = accountMap.getNameByAddress(t.specification.counterparty);
 
         p.currency = t.specification.currency;
