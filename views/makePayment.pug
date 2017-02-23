@@ -29,6 +29,7 @@ html
         select(name='destinationAccount')
           each account, i in accountList
             option(value=i) #{account.name} (#{account.address})
+        input#destinationAccountAddress(type='text' name='destinationAccountAddress')
       div
         label(for='destinationCurrency') Currency:
         input#destinationCurrency(type='text' name='destinationCurrency')

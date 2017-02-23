@@ -8,7 +8,7 @@ function showMakePayment(req, res) {
 
 function makePayment(req, res, next) {
     const sourceAccount = this.accountList[req.body.sourceAccount];
-    const destinationAccount = this.accountList[req.body.destinationAccount];
+    const destinationAddress = req.body.destinationAccountAddress !== '' ? req.body.destinationAccountAddress : this.accountList[req.body.destinationAccount].address;
     var sourceMaxAmount = {
         'currency': req.body.sourceCurrency,
         'value': req.body.sourceMaxAmount
@@ -30,7 +30,7 @@ function makePayment(req, res, next) {
             'maxAmount': sourceMaxAmount
         },
         'destination': {
-            'address': destinationAccount.address,
+            'address': destinationAddress,
             'amount': destinationAmount
         }
     };
