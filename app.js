@@ -3,6 +3,7 @@ var express = require('express');
 var routes = require('./routes');
 var app = express();
 var bodyParser = require('body-parser');
+var config = require('./config');
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -53,8 +54,9 @@ app.post('/transaction/orderCancel', routes.handleCancelOrderAction);
 
 app.use(routes.handleError);
 
-app.listen(3000, () => {
-    console.log('Example app listening on port 3000!')
+const port = config.port;
+app.listen(port, () => {
+    console.log(`Example app listening on port ${port}!`)
 });
 
 process.on('SIGTERM',function() {
