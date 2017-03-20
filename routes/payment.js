@@ -14,8 +14,8 @@ function makePayment(req, res, next) {
         'value': req.body.sourceMaxAmount
     };
     var destinationAmount = {
-        'currency': req.body.destinationCurrency,
-        'value': req.body.destinationAmount
+        'currency': req.body.destinationCurrency !== '' ? req.body.destinationCurrency : req.body.sourceCurrency,
+        'value': req.body.destinationAmount !== '' ? req.body.destinationAmount : req.body.sourceMaxAmount
     }
     if (sourceMaxAmount.currency != 'XRP') {
         sourceMaxAmount.counterparty = this.accountList[req.body.sourceCounterparty].address;

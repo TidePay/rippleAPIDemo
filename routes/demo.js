@@ -15,7 +15,9 @@ var wrap = require('./wrap.js');
 var serverList = [
     {name: 'Public rippled server 1 - General purpose', websocket: 'wss://s1.ripple.com'},  // Public rippled server hosted by Ripple, Inc. (general purpose server)
     {name: 'Public rippled server 2 - Full history', websocket: 'wss://s2.ripple.com'},     // Public rippled server hosted by Ripple, Inc. (full-history server)
-    {name: 'Ripple test net', websocket: 'wss://s.altnet.rippletest.net:51233'}             // Ripple test net
+    {name: 'Ripple test net', websocket: 'wss://s.altnet.rippletest.net:51233'},            // Ripple test net
+    {name: 'iSunPay staging', websocket: 'ws://192.168.100.92:6006'},                        // iSunPay staging
+    {name: 'iSunPay staging - Full history', websocket: 'ws://192.168.100.96:6006'}         // iSunPay staging (full-history server)
 ];
 
 var operationList = [
