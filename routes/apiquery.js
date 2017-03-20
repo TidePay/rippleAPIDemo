@@ -1,6 +1,7 @@
 var request = require('request');
+var config = require('../config');
 
-const HOST_URL = 'http://localhost:3000';   // TODO: use req.hostname to get this
+const HOST_URL = 'http://localhost:' + config.port;   // TODO: use req.hostname to get this
 
 // list of query commands
 var commandList = [
