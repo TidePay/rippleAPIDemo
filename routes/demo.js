@@ -13,28 +13,28 @@ var wrap = require('./wrap.js');
 
 // list of rippled websocket
 var serverList = [
-    {name: 'Public rippled server 1 - General purpose', websocket: 'wss://s1.ripple.com'},  // Public rippled server hosted by Ripple, Inc. (general purpose server)
-    {name: 'Public rippled server 2 - Full history', websocket: 'wss://s2.ripple.com'},     // Public rippled server hosted by Ripple, Inc. (full-history server)
-    {name: 'Ripple test net', websocket: 'wss://s.altnet.rippletest.net:51233'},            // Ripple test net
-    {name: 'iSunPay staging', websocket: 'ws://192.168.100.92:6006'},                        // iSunPay staging
-    {name: 'iSunPay staging - Full history', websocket: 'ws://192.168.100.96:6006'}         // iSunPay staging (full-history server)
+    { name: 'Public rippled server 1 - General purpose', websocket: 'wss://s1.ripple.com' },  // Public rippled server hosted by Ripple, Inc. (general purpose server)
+    { name: 'Public rippled server 2 - Full history', websocket: 'wss://s2.ripple.com' },     // Public rippled server hosted by Ripple, Inc. (full-history server)
+    { name: 'Ripple test net', websocket: 'wss://s.altnet.rippletest.net:51233' },            // Ripple test net
+    { name: 'iSunPay staging', websocket: 'ws://192.168.100.92:6006' },                        // iSunPay staging
+    { name: 'iSunPay staging - Full history', websocket: 'ws://192.168.100.96:6006' }         // iSunPay staging (full-history server)
 ];
 
 var operationList = [
-    {name: 'Manage Accounts', path: '/manageAccounts'},
-    {name: 'Get Account Data', path: '/queryAccount'},
-    {name: 'Get Order Book', path: '/getOrderbook'},
-    {name: 'Get Paths', path: '/getPaths'},
-    {name: 'Make Payment', path: '/transaction/payment'},
-    {name: 'Place Order', path: '/transaction/order'},
-    {name: 'Cancel Order', path: '/transaction/orderCancel'},
-    {name: 'Change Settings', path: '/transaction/settings'},
-    {name: 'Change Trustline', path: '/transaction/trustline'}
+    { name: 'Manage Accounts', path: '/manageAccounts' },
+    { name: 'Get Account Data', path: '/queryAccount' },
+    { name: 'Get Order Book', path: '/getOrderbook' },
+    { name: 'Get Paths', path: '/getPaths' },
+    { name: 'Make Payment', path: '/transaction/payment' },
+    { name: 'Place Order', path: '/transaction/order' },
+    { name: 'Cancel Order', path: '/transaction/orderCancel' },
+    { name: 'Change Settings', path: '/transaction/settings' },
+    { name: 'Change Trustline', path: '/transaction/trustline' }
 ];
 
 function displayServerList(req, res) {
     if (!this.api) {
-        res.render('server', {servers: serverList})
+        res.render('server', { servers: serverList })
     } else {
         res.redirect('/main');
     }
@@ -42,7 +42,7 @@ function displayServerList(req, res) {
 
 function connectToServer(req, res) {
     if (!this.api) {
-        this.api = new RippleAPI({server: req.body.server});
+        this.api = new RippleAPI({ server: req.body.server });
         this.api.connect().then(() => {
             console.log('Connected to ' + req.body.server);
 
@@ -64,11 +64,7 @@ function connectToServer(req, res) {
 };
 
 function main(req, res) {
-    if (this.api && this.api.isConnected()) {
-        res.render('main', {commands: apiquery.commandList, operations: operationList});
-    } else {
-        res.send('Not yet connected to rippled server.');
-    }
+    res.render('main', { commands: apiquery.commandList, operations: operationList });
 };
 
 // middleware function to check ripple connection
@@ -76,8 +72,8 @@ function checkRippleConnection(req, res, next) {
     if (this.api && this.api.isConnected()) {
         next();
     } else {
-        res.status(400);
-        res.send('Not yet connected to ripple server.');
+        this.api = null;
+        res.redirect('/');
     }
 };
 
@@ -87,7 +83,7 @@ function onValidatedLedger(ledger) {
     console.log(JSON.stringify(ledger, null, 2));
 };
 
-var RippleAPIDemo = function() {
+var RippleAPIDemo = function () {
     this.api = null;
     this.accountList = [];
     this.accountMap = new manageAccount.AccountMap();
@@ -132,6 +128,7 @@ RippleAPIDemo.prototype.submitQuery = apiquery.submitQuery;
 
 RippleAPIDemo.prototype.getAccountInfo = wrap.getAccountInfo;
 RippleAPIDemo.prototype.getServerInfo = wrap.getServerInfo;
+RippleAPIDemo.prototype.getBalanceSheet = wrap.getBalanceSheet;
 RippleAPIDemo.prototype.getTransaction = wrap.getTransaction;
 RippleAPIDemo.prototype.getTransactions = wrap.getTransactions;
 RippleAPIDemo.prototype.getLedger = wrap.getLedger;

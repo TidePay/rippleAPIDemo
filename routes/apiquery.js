@@ -12,6 +12,7 @@ var commandList = [
     {name: 'getLedger', command: 'ledger', params: []},
     {name: 'getTrustlines', command: 'trustlines', params: ['address']},
     {name: 'getBalances', command: 'balances', params: ['address']},
+    {name: 'getBalanceSheet', command: 'balancesheet', params: ['address']},
     {name: 'getOrders', command: 'orders', params: ['address']},
     {name: 'getSettings', command: 'settings', params: ['address']}
 ];

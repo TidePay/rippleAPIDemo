@@ -48,6 +48,7 @@ exports.submitQuery = (req, res) => demo.submitQuery(req, res);
 
 exports.getAccountInfo = (req, res, next) => demo.getAccountInfo(req, res, next);
 exports.getServerInfo = (req, res, next) => demo.getServerInfo(req, res, next);
+exports.getBalanceSheet = (req, res, next) => demo.getBalanceSheet(req, res, next);
 exports.getTransaction = (req, res, next) => demo.getTransaction(req, res, next);
 exports.getTransactions = (req, res, next) => demo.getTransactions(req, res, next);
 exports.getLedger = (req, res, next) => demo.getLedger(req, res, next);

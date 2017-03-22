@@ -16,6 +16,15 @@ exports.getServerInfo = function(req, res, next) {
     });
 };
 
+exports.getBalanceSheet = function(req, res, next) {
+    console.log('getBalanceSheet');
+    this.api.getBalanceSheet(req.params.address).then(info => {
+        res.send(info);
+    }).catch(err => {
+        next(err);
+    });
+};
+
 exports.getTransaction = function(req, res, next) {
     console.log('getTransaction');
     this.api.getTransaction(req.params.id).then(info => {
