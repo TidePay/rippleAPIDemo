@@ -183,7 +183,7 @@ function processAccountOrders(accountMap, orders, account) {
 }
 
 function queryAccount(req, res, next) {
-    const account = this.accountList[req.body.account];
+    const account = req.body.accountAddress !== '' ? { name: 'No name', address: req.body.accountAddress } : this.accountList[req.body.account];
     var pugParam = {
         'data': new AccountData(account.name, account.address),
         'maxTransactions': ACCOUNT_DATA_MAX_TRANSACTIONS,

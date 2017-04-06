@@ -11,6 +11,7 @@ html
         select(name='account')
           each account, i in accountList
             option(value=i) #{account.name} (#{account.address})
+        input#accountAddress(type='text' name='accountAddress')
       button(type='submit') Submit
     
     h1 #{data.accountName} (#{data.accountAddress})
