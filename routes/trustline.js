@@ -15,7 +15,8 @@ function changeTrustline(req, res, next) {
         'limit': req.body.limit,
         'qualityIn': parseFloat(req.body.qualityIn),
         'qualityOut': parseFloat(req.body.qualityOut),
-        'ripplingDisabled': req.body.ripplingDisabled ? true : false
+        'ripplingDisabled': req.body.ripplingDisabled ? true : false,
+        'frozen': req.body.frozen ? true : false,
     };
 
     console.log('prepareSettings');

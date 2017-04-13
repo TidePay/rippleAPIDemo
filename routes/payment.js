@@ -37,6 +37,12 @@ function makePayment(req, res, next) {
     if (req.body.paths && req.body.paths != '') {
         payment.paths = req.body.paths;
     }
+    if (req.body.memo && req.body.memo != '') {
+        payment.memos = [{
+            data: req.body.memo,
+            format: 'application/JSON',
+        }];
+    }
 
     console.log('preparePayment');
     this.api.preparePayment(sourceAccount.address, payment, tx.instructions).then(prepared => {

@@ -41,7 +41,13 @@ html
         select(name='destinationCounterparty')
           each account, i in accountList
             option(value=i) #{account.name} (#{account.address})
-      
+
+      h2 Memo (JSON)
+      div
+        label(for='memo') Memo:
+        textarea#memo(type='text' name='memo' rows=4 cols=50)
+      br
+
       h2 Path
       div
         label(for='paths') Paths:

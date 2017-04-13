@@ -38,6 +38,8 @@ function signAndSubmitTransaction(api, preparedTransaction, accountSecret) {
     console.log('Transaction ID: ' + signed.id);
     console.log('submit');
 
+    console.log('Max Ledger Version:', preparedTransaction.instructions.maxLedgerVersion);
+
     return api.getLedgerVersion().then(ledgerVersion => {
         result.ledgerVersionOptions = {
             'minLedgerVersion': ledgerVersion,
