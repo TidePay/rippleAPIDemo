@@ -4,7 +4,9 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "patch": "node node_patch/patch.js",
+    "postinstall": "npm run patch"
   },
   "dependencies": {
     "babel-cli": "^6.23.0",
