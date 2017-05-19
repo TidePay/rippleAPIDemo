@@ -1,20 +1,15 @@
 {
   "name": "AccountCreator",
-  "address": "rBM66gAEXsRL1rCGM7FwPxqL1565Q3ibjw",
-  "secret": "sn7veHrujJhGMKNzWArqHjjvAoXW4"
-},
-{
-  "name": "alex",
-  "address": "rN31wxQsuLxrJyQRvjez7W7d9Ka97j5JDc",
-  "secret": "shGPbwbDBPs92KoU81WuZvKM68EBg"
-},
-{
-  "name": "Michael",
-  "address": "rnVUMSsWNdqU4bEghzCQwzCo85hd3YVkVg",
-  "secret": "snRZER7P28gF43Gy2JfgPXhmH2Zko"
+  "address": "tw1ifT93DorsHe82hvLSbRRtTQWbmBqiNj",
+  "secret": "s"
 },
 {
   "name": "gateway",
-  "address": "rPwNTfuGgAujf3wftNPR7Qjj5vZGUHcsN5",
-  "secret": "sndPHiMDaFFa9326Vr565xUmxEonT"
+  "address": "tszuaemDXJi8unB94GrVNHbK4TdDKb3J8q",
+  "secret": "s"
+},
+{
+  "name": "gateway@development",
+  "address": "tfKrDbL8AdcmBonpp4weWSP2qcjrKBnAz8",
+  "secret": "s"
 }
