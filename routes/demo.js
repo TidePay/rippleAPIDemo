@@ -63,13 +63,27 @@ function connectToServer(req, res) {
     }
 };
 
+function disconnectServer(req, res) {
+    this.api.disconnect()
+        .then(() => {
+            console.log('Disconnected');
+        })
+        .catch((err) => {
+            console.log('Cannot disconnect', err);
+        });
+    this.api = null;
+    res.redirect('/');
+};
+
 function main(req, res) {
     res.render('main', { commands: apiquery.commandList, operations: operationList });
 };
 
 // middleware function to check ripple connection
 function checkRippleConnection(req, res, next) {
-    if (this.api && this.api.isConnected()) {
+    if (req.path === '/') {
+        next();
+    } else if (this.api && this.api.isConnected()) {
         next();
     } else {
         this.api = null;
@@ -91,6 +105,7 @@ var RippleAPIDemo = function () {
 
 RippleAPIDemo.prototype.displayServerList = displayServerList;
 RippleAPIDemo.prototype.connectToServer = connectToServer;
+RippleAPIDemo.prototype.disconnectServer = disconnectServer;
 RippleAPIDemo.prototype.checkRippleConnection = checkRippleConnection;
 
 RippleAPIDemo.prototype.main = main;

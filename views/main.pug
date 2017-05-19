@@ -13,3 +13,6 @@ html
             each command, index in commands
                 li
                     a(href='./query/' + index) #{command.name}
+
+        form(method='POST' action='/disconnect')
+            button(type='submit') Change server

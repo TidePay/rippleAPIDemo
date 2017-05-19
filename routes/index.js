@@ -12,6 +12,7 @@ exports.handleError = function(err, req, res, next) {
 
 exports.displayServerList = (req, res) => demo.displayServerList(req, res);
 exports.connectToServer = (req, res) => demo.connectToServer(req, res);
+exports.disconnectServer = (req, res) => demo.disconnectServer(req, res);
 exports.checkRippleConnection = (req, res, next) => demo.checkRippleConnection(req, res, next);
 
 exports.main = (req, res) => demo.main(req, res);
