@@ -114,6 +114,7 @@ RippleAPIDemo.prototype.loadAccountFromFile = manageAccount.loadAccountFromFile;
 RippleAPIDemo.prototype.showAccountList = manageAccount.showAccountList;
 RippleAPIDemo.prototype.addExistingAccount = manageAccount.addExistingAccount;
 RippleAPIDemo.prototype.createAccount = manageAccount.createAccount;
+RippleAPIDemo.prototype.generateAddress = manageAccount.generateAddress;
 
 RippleAPIDemo.prototype.queryAccount = accountData.queryAccount;
 RippleAPIDemo.prototype.showQueryAccount = accountData.showQueryAccount;

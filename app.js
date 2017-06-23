@@ -38,6 +38,7 @@ app.get('/q/settings/:address', routes.getSettings);
 app.get('/manageAccounts', routes.showAccountList);
 app.post('/manageAccounts/addExisting', routes.addExistingAccount);
 app.post('/manageAccounts/create', routes.createAccount);
+app.post('/manageAccounts/generate', routes.generateAddress);
 app.get('/queryAccount', routes.showQueryAccount);
 app.post('/queryAccount', routes.queryAccount);
 app.get('/getPaths', routes.showGetPaths);

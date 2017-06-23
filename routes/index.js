@@ -20,6 +20,7 @@ exports.main = (req, res) => demo.main(req, res);
 exports.showAccountList = (req, res) => demo.showAccountList(req, res);
 exports.addExistingAccount = (req, res) => demo.addExistingAccount(req, res);
 exports.createAccount = (req, res) => demo.createAccount(req, res);
+exports.generateAddress = (req, res) => demo.generateAddress(req, res);
 
 exports.queryAccount = (req, res, next) => demo.queryAccount(req, res, next);
 exports.showQueryAccount = (req, res) => demo.showQueryAccount(req, res);

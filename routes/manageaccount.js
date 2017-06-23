@@ -154,8 +154,16 @@ function createAccount(req, res) {
     });
 };
 
+function generateAddress(req, res) {
+    // generate address
+    var newAddress = this.api.generateAddress();
+
+    res.render('accountList', {'accounts': this.accountList, 'generatedAddress': newAddress});
+};
+
 exports.AccountMap = AccountMap;
 exports.loadAccountFromFile = loadAccountFromFile;
 exports.showAccountList = showAccountList;
 exports.addExistingAccount = addExistingAccount;
 exports.createAccount = createAccount;
+exports.generateAddress = generateAddress;

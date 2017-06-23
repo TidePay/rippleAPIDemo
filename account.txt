@@ -12,4 +12,9 @@
   "name": "gateway@development",
   "address": "tfKrDbL8AdcmBonpp4weWSP2qcjrKBnAz8",
   "secret": "s"
+},
+{
+  "name": "gateway@twstaging",
+  "address": "thp5wn56T4y5X9wtC8UCVXU5xZci61DAc8",
+  "secret": "s"
 }

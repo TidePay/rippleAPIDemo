@@ -34,6 +34,15 @@ html
             option(value=i) #{account.name} (#{account.address})
       button(type='submit') Create
 
+    h2 Generate Address
+    form(method='POST' action='/manageAccounts/generate')
+      button(type='submit') Generate
+    if generatedAddress
+      p
+        | Public: #{generatedAddress.address}
+        br
+        | Secret: #{generatedAddress.secret}
+
     h2 Add Existing Account
     form(method='POST' action='/manageAccounts/addExisting')
       div
